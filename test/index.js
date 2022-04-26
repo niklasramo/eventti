@@ -171,25 +171,28 @@ test('.emit(event, ...args) should pass the arguments to the listeners', (t) => 
   emitter.emit('test', ...args);
 });
 
-test('.emit(event) should only execute all the listeners that exist when the method is called', (t) => {
+test('.emit(event) should only execute the listeners synchronously in correct order', (t) => {
   const emitter = new Emitter();
   let value = '';
 
-  emitter.on('test', () => {
+  const a = emitter.on('test', () => {
     value += 'a';
-    emitter.off('test');
+    emitter.off('test', a);
+    emitter.off('test', b);
+    emitter.emit('test');
+  });
+  const b = emitter.on('test', () => {
+    value += 'b';
     emitter.on('test', () => {
-      value += 'b';
+      value += 'x';
     });
     emitter.emit('test');
   });
-  emitter.on('test', () => {
+  const c = emitter.on('test', () => {
     value += 'c';
   });
-  emitter.on('test', () => {
-    value += 'd';
-  });
+
   emitter.emit('test');
 
-  t.is(value, 'abcd');
+  t.is(value, 'acbcxc');
 });
