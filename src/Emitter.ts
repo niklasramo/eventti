@@ -2,7 +2,7 @@ import { EventType, EventListener, EventListenerId, Events } from './types';
 
 class EventData {
   idMap: Map<EventListenerId, EventListener>;
-  fnMap: Map<Function, Set<EventListenerId>>;
+  fnMap: Map<EventListener, Set<EventListenerId>>;
   onceList: Set<EventListenerId>;
   emitList: EventListener[] | null;
 
@@ -163,8 +163,16 @@ export class Emitter<T extends Events> {
     // "eventData.deleteListener" method in case there are once listeners,
     // intentionally.
     if (eventData.onceList.size) {
-      for (const listenerId of eventData.onceList) {
-        eventData.deleteListener(listenerId);
+      // If once list has all the listener ids we can just delete the event
+      // and be done with it as there's no listeners left.
+      if (eventData.onceList.size === eventData.idMap.size) {
+        this._events.delete(type);
+      }
+      // Otherwise, let's delete the listeners one by one.
+      else {
+        for (const listenerId of eventData.onceList) {
+          eventData.deleteListener(listenerId);
+        }
       }
     }
 

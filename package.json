@@ -40,7 +40,7 @@
     "test": "ava",
     "dev": "microbundle watch",
     "build": "npm run ts-check && npm run format && npm run bundle",
-    "bundle": "del ./dist && microbundle --strict --name emi",
+    "bundle": "del ./dist && microbundle --strict --name Emi",
     "ts-check": "$(npm bin)/tsc --noEmit",
     "format": "$(npm bin)/prettier --write ./src/**/*.ts",
     "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts"

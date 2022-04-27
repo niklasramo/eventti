@@ -23,15 +23,16 @@ export class UniqueEmitter<T extends Events> {
     return eventData;
   }
 
-  on<EventType extends keyof T>(type: EventType, listener: T[EventType]): void {
+  on<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
     const { listeners, emitList } = this._events.get(type) || this._createEventData(type);
     if (!listeners.has(listener)) {
       listeners.add(listener);
       emitList?.push(listener);
     }
+    return listener;
   }
 
-  once<EventType extends keyof T>(type: EventType, listener: T[EventType]): void {
+  once<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
     const { listeners, onceListeners, emitList } =
       this._events.get(type) || this._createEventData(type);
     if (!listeners.has(listener)) {
@@ -39,6 +40,7 @@ export class UniqueEmitter<T extends Events> {
       onceListeners.add(listener);
       emitList?.push(listener);
     }
+    return listener;
   }
 
   off<EventType extends keyof T>(type?: EventType, listener?: T[EventType]): void {

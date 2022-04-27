@@ -1,7 +1,7 @@
 import { EventType, EventListener, EventListenerId, Events } from './types';
 declare class EventData {
     idMap: Map<EventListenerId, EventListener>;
-    fnMap: Map<Function, Set<EventListenerId>>;
+    fnMap: Map<EventListener, Set<EventListenerId>>;
     onceList: Set<EventListenerId>;
     emitList: EventListener[] | null;
     constructor();
