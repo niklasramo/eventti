@@ -1,5 +1,14 @@
 import { EventType, EventListener, EventListenerId, Events } from './types';
 
+function getOrCreateEventData(events: Map<EventType, EventData>, type: EventType) {
+  let eventData = events.get(type);
+  if (!eventData) {
+    eventData = new EventData();
+    events.set(type, eventData);
+  }
+  return eventData;
+}
+
 class EventData {
   idMap: Map<EventListenerId, EventListener>;
   fnMap: Map<EventListener, Set<EventListenerId>>;
@@ -14,16 +23,17 @@ class EventData {
   }
 
   addListener(listener: EventListener, once?: boolean): EventListenerId {
-    // Create unique listener id, a symbol is optimal for this case since we
-    // need uid, but not uuid.
-    const listenerId = Symbol();
-
-    // Get/Create existing listener ids for the listener.
+    // Get existing listener ids for the listener.
     let listenerIds = this.fnMap.get(listener);
+
+    // Create listener id list if needed.
     if (!listenerIds) {
       listenerIds = new Set();
       this.fnMap.set(listener, listenerIds);
     }
+
+    // Create unique listener id. A symbol is optimal for this case.
+    const listenerId = Symbol();
 
     // Store listener and listener id.
     listenerIds.add(listenerId);
@@ -34,7 +44,9 @@ class EventData {
       this.onceList.add(listenerId);
     }
 
-    // Add to emit list if needed.
+    // Add to emit list if needed. We can safely add new listeners to the
+    // end of emit list even if it is currently looping, but we can't remove
+    // items from it.
     this.emitList?.push(listener);
 
     return listenerId;
@@ -79,32 +91,11 @@ export class Emitter<T extends Events> {
   }
 
   on<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    // Get event data.
-    let eventData = this._events.get(type);
-
-    // Create event data if it does not exist yet.
-    if (!eventData) {
-      eventData = new EventData();
-      this._events.set(type, eventData);
-    }
-
-    // Add the listener to the event data and return the listener id.
-    return eventData.addListener(listener);
+    return getOrCreateEventData(this._events, type).addListener(listener);
   }
 
   once<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    // Get event data.
-    let eventData = this._events.get(type);
-
-    // Create event data if it does not exist yet.
-    if (!eventData) {
-      eventData = new EventData();
-      this._events.set(type, eventData);
-    }
-
-    // Add the listener to the event (with once flag) data and return the
-    // listener id.
-    return eventData.addListener(listener, true);
+    return getOrCreateEventData(this._events, type).addListener(listener, true);
   }
 
   off<EventType extends keyof T>(
@@ -145,40 +136,43 @@ export class Emitter<T extends Events> {
 
   emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void {
     const eventData = this._events.get(type);
-    if (!eventData || !eventData.idMap.size) return;
+    if (!eventData) return;
+
+    const { idMap, onceList } = eventData;
+
+    // Return early if there are no listeners.
+    if (idMap.size) return;
 
     // Get the listeners for this emit process. If we have cached listeners
     // in event data (emit list) we use that, and fallback to cloning the
     // listeners from the id map. The listeners we loop should be just a
     // simple array for best performance. Cloning the listeners is expensive,
     // which is why we do it only when absolutely needed.
-    const listeners = eventData.emitList || [...eventData.idMap.values()];
-
-    // Cache the listeners.
-    eventData.emitList = listeners;
+    const listeners = eventData.emitList || [...idMap.values()];
 
     // Delete all once listeners _after_ the clone operation. We don't want
     // to touch the cloned/cached listeners here, but only the "live" data.
-    // Note the listeners will be uncached from event data via
-    // "eventData.deleteListener" method in case there are once listeners,
-    // intentionally.
-    if (eventData.onceList.size) {
+    if (onceList.size) {
       // If once list has all the listener ids we can just delete the event
-      // and be done with it as there's no listeners left.
-      if (eventData.onceList.size === eventData.idMap.size) {
+      // and be done with it.
+      if (onceList.size === idMap.size) {
         this._events.delete(type);
       }
-      // Otherwise, let's delete the listeners one by one.
+      // Otherwise, let's delete the once listeners one by one.
       else {
-        for (const listenerId of eventData.onceList) {
+        for (const listenerId of onceList) {
           eventData.deleteListener(listenerId);
         }
       }
     }
+    // In case there are no once listeners we can cache the listeners array.
+    else {
+      eventData.emitList = listeners;
+    }
 
     // Execute the current event listeners. Basic for loop for the win. Here
-    // it is important to cache the listeners' length for functionality's sake
-    // as the listeners array may grow during execution (but not shrink).
+    // it's important to cache the listeners' length as the listeners array may
+    // grow during execution (but not shrink).
     let i = 0;
     let l = listeners.length;
     for (; i < l; i++) {

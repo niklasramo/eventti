@@ -6,6 +6,19 @@ interface EventData {
   emitList: EventListener[] | null;
 }
 
+function getOrCreateEventData(events: Map<EventType, EventData>, type: EventType) {
+  let eventData = events.get(type);
+  if (!eventData) {
+    eventData = {
+      listeners: new Set(),
+      onceListeners: new Set(),
+      emitList: null,
+    };
+    events.set(type, eventData);
+  }
+  return eventData;
+}
+
 export class UniqueEmitter<T extends Events> {
   protected _events: Map<EventType, EventData>;
 
@@ -13,18 +26,8 @@ export class UniqueEmitter<T extends Events> {
     this._events = new Map();
   }
 
-  protected _createEventData<EventType extends keyof T>(type: EventType): EventData {
-    const eventData: EventData = {
-      listeners: new Set(),
-      onceListeners: new Set(),
-      emitList: null,
-    };
-    this._events.set(type, eventData);
-    return eventData;
-  }
-
   on<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { listeners, emitList } = this._events.get(type) || this._createEventData(type);
+    const { listeners, emitList } = getOrCreateEventData(this._events, type);
     if (!listeners.has(listener)) {
       listeners.add(listener);
       emitList?.push(listener);
@@ -33,8 +36,7 @@ export class UniqueEmitter<T extends Events> {
   }
 
   once<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { listeners, onceListeners, emitList } =
-      this._events.get(type) || this._createEventData(type);
+    const { listeners, onceListeners, emitList } = getOrCreateEventData(this._events, type);
     if (!listeners.has(listener)) {
       listeners.add(listener);
       onceListeners.add(listener);
@@ -70,22 +72,30 @@ export class UniqueEmitter<T extends Events> {
     const eventData = this._events.get(type);
     if (!eventData) return;
 
-    const listeners = eventData.emitList || [...eventData.listeners];
+    const { listeners, onceListeners, emitList } = eventData;
 
-    if (eventData.onceListeners.size) {
-      eventData.emitList = null;
-      for (const listener of eventData.onceListeners) {
-        eventData.listeners.delete(listener);
+    if (!listeners.size) return;
+
+    const cachedListeners = emitList || [...listeners];
+
+    if (onceListeners.size) {
+      if (onceListeners.size === listeners.size) {
+        this._events.delete(type);
+      } else {
+        for (const listener of onceListeners) {
+          listeners.delete(listener);
+        }
+        onceListeners.clear();
+        eventData.emitList = null;
       }
-      eventData.onceListeners.clear();
     } else {
-      eventData.emitList = listeners;
+      eventData.emitList = cachedListeners;
     }
 
     let i = 0;
-    let l = listeners.length;
+    let l = cachedListeners.length;
     for (; i < l; i++) {
-      listeners[i](data);
+      cachedListeners[i](data);
     }
   }
 }
