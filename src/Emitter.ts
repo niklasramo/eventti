@@ -32,7 +32,8 @@ class EventData {
       this.fnMap.set(listener, listenerIds);
     }
 
-    // Create unique listener id. A symbol is optimal for this case.
+    // Create unique listener id. A symbol is optimal for this case since
+    // it's always unique.
     const listenerId = Symbol();
 
     // Store listener and listener id.
@@ -141,7 +142,7 @@ export class Emitter<T extends Events> {
     const { idMap, onceList } = eventData;
 
     // Return early if there are no listeners.
-    if (idMap.size) return;
+    if (!idMap.size) return;
 
     // Get the listeners for this emit process. If we have cached listeners
     // in event data (emit list) we use that, and fallback to cloning the
