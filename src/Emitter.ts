@@ -22,7 +22,7 @@ class EventData {
     this.emitList = null;
   }
 
-  addListener(listener: EventListener, once?: boolean): EventListenerId {
+  add(listener: EventListener, once?: boolean): EventListenerId {
     // Get existing listener ids for the listener.
     let listenerIds = this.fnMap.get(listener);
 
@@ -48,12 +48,14 @@ class EventData {
     // Add to emit list if needed. We can safely add new listeners to the
     // end of emit list even if it is currently looping, but we can't remove
     // items from it.
-    this.emitList?.push(listener);
+    if (this.emitList) {
+      this.emitList.push(listener);
+    }
 
     return listenerId;
   }
 
-  deleteListener(listenerId: EventListenerId) {
+  delId(listenerId: EventListenerId) {
     if (!this.idMap.has(listenerId)) return;
 
     const listener = this.idMap.get(listenerId) as EventListener;
@@ -70,7 +72,7 @@ class EventData {
     this.emitList = null;
   }
 
-  deleteListeners(listener: EventListener) {
+  delFn(listener: EventListener) {
     const listenerIds = this.fnMap.get(listener);
     if (!listenerIds) return;
 
@@ -92,11 +94,11 @@ export class Emitter<T extends Events> {
   }
 
   on<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    return getOrCreateEventData(this._events, type).addListener(listener);
+    return getOrCreateEventData(this._events, type).add(listener);
   }
 
   once<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    return getOrCreateEventData(this._events, type).addListener(listener, true);
+    return getOrCreateEventData(this._events, type).add(listener, true);
   }
 
   off<EventType extends keyof T>(
@@ -122,11 +124,11 @@ export class Emitter<T extends Events> {
     // If listener is a function let's delete all instances of it from the
     // event type.
     if (typeof listener === 'function') {
-      eventData.deleteListeners(listener);
+      eventData.delFn(listener);
     }
     // If the listener is a listener id let's delete the specific listener.
     else {
-      eventData.deleteListener(listener);
+      eventData.delId(listener);
     }
 
     // If the event type doesn't have any listeners left let's delete it.
@@ -162,7 +164,7 @@ export class Emitter<T extends Events> {
       // Otherwise, let's delete the once listeners one by one.
       else {
         for (const listenerId of onceList) {
-          eventData.deleteListener(listenerId);
+          eventData.delId(listenerId);
         }
       }
     }

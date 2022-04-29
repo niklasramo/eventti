@@ -3,7 +3,7 @@
 A fast, small and reliable event emitter. Emi provides the good 'ol event emitter API with stable performance across the browsers and with a few carefully though additions.
 
 - The classic event emitter API.
-- Small footprint (~1kb gzipped).
+- Small footprint (under 1kb gzipped).
 - Highly optimized and stable performance.
 - Written in TypeScript.
 - Works in Node.js and modern browsers.
@@ -27,15 +27,35 @@ Browser
 <h2><a id="basic-usage" href="#basic-usage" aria-hidden="true">#</a> Basic usage</h2>
 
 ```typescript
-import { Emitter } from 'emi';
+import { Emitter, UniqueEmitter } from 'emi';
 
+// Emitter allows duplicate event listeners.
 const emitter = new Emitter();
 const listener = (msg) => console.log(msg);
-
+emitter.on('test', listener);
 emitter.on('test', listener);
 emitter.emit('test', 'Hello World!');
+// -> "Hello World!" x 2
 emitter.off('test', listener);
+
+// UniqueEmitter ignores duplicate event listeners.
+const uniqEmitter = new UniqueEmitter();
+const listener = (msg) => console.log(msg);
+uniqEmitter.on('test', listener);
+uniqEmitter.on('test', listener); // discarded
+uniqEmitter.emit('test', 'Hello World!');
+// -> "Hello World!" x 1
+uniqEmitter.off('test', listener);
 ```
+
+You can also import the specific emitter like this.
+
+```typescript
+import { Emitter } from 'emi/emitter';
+import { UniqueEmitter } from 'emi/unique-emitter';
+```
+
+The benefit here is that these more specific imports only load the code for the specific emitter so you'll save some bytes. However, if you are using a bundler which does some tree shaking you'll probably be fine just importing the emitters from `'emi'`.
 
 <h2><a id="special-features" href="#special-features" aria-hidden="true">#</a> Special features</h2>
 
@@ -43,17 +63,15 @@ emitter.off('test', listener);
 
 Event emitters, which allow adding multiple instances of the same listener to an event, usually have a bit of varying behavior when it comes to removing those duplicate listeners. Calling `emitter.off('test', listener)` usually removes either the first instance of `listener` _or_ all instances of `listener`. What's missing is a way to delete specific listeners.
 
-Emi's `emitter.on()` and `emitter.once()` mehthods return a unique listener id (symbol), which can be used to remove that specific listener. In addition to that Emi also allows you to remove listener instances based on the listener function in which case all instances of the listener function are removed.
+Emi's `emitter.on()` and `emitter.once()` methods return a unique listener id (symbol), which can be used to remove that specific listener. In addition to that Emi also allows you to remove listener instances based on the listener function in which case all instances of the listener function are removed.
 
 Check out the documentation for [`emitter.off()`](#emitter-off) to see an example of this.
 
 <h3><a id="feat-2" href="#feat-2" aria-hidden="true">#</a> Preventing duplicate listeners</h3>
 
-Emi's `Emitter` allows adding duplicate event listeners to events, but sometimes you might not want that behavior. To cater for scenarios where duplicate event listeners need to be automatically ignored Emi provides `UniqueEmitter`. The API is identical to that of `Emitter`s with the exception that `emitter.on()` and `emitter.once()` methods return the provided listener function instead of a symbol as the unique listener id.
+Emi's `Emitter` allows adding duplicate event listeners to events, but sometimes you might not want that behavior. To cater for scenarios where duplicate event listeners need to be automatically ignored Emi provides `UniqueEmitter`. The API is identical to that of `Emitter`'s with the exception that `emitter.on()` and `emitter.once()` methods return the provided listener function instead of a symbol as the unique listener id.
 
 You might be wondering why there is a separate implementation for this simple functionality, which _could_ be added to `Emitter` (as an option) with a few lines of code. Well, it turns out that when you can't have duplicate listeners you can keep the data structure more compact (at least in this specific case) and also increase the performance a little bit in certain scenarios. This way we can provide the optimal code for this specific use case.
-
-This does indeed increase the overall size of the library, but you should be able to tree shake the unused emitter (if any), when using a bundler.
 
 <h3><a id="feat-3" href="#feat-3" aria-hidden="true">#</a> Faster emits with cached listener queue</h3>
 
@@ -70,13 +88,6 @@ However, instead of cloning the listeners _always_ we can alternatively clone th
 ```javascript
 import { Emitter } from 'emi';
 const emitter = new Emitter();
-```
-
-NOTE: You can add the same event listener function multiple times to an event. This is a feature, not a bug. If you don't want to allow duplicate event listeners, please use `UniqueEmitter`. It has identical API to `Emitter` with the exception that `on` and `once` methods return the listener function (as the listener id) instead of a symbol.
-
-```javascript
-import { UniqueEmitter } from 'emi';
-const emitter = new UniqueEmitter();
 ```
 
 **Methods**
@@ -135,7 +146,7 @@ emitter.emit('test');
 
 <h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventType, listener )</code></h3>
 
-Add a one-off listener to an event.
+Add a one-off listener to an event. You can add the same listener multiple times.
 
 **Arguments**
 

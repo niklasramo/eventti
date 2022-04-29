@@ -1,8 +1,8 @@
 import { EventType, EventListener, Events } from './types';
 
 interface EventData {
-  listeners: Set<EventListener>;
-  onceListeners: Set<EventListener>;
+  list: Set<EventListener>;
+  onceList: Set<EventListener>;
   emitList: EventListener[] | null;
 }
 
@@ -10,8 +10,8 @@ function getOrCreateEventData(events: Map<EventType, EventData>, type: EventType
   let eventData = events.get(type);
   if (!eventData) {
     eventData = {
-      listeners: new Set(),
-      onceListeners: new Set(),
+      list: new Set(),
+      onceList: new Set(),
       emitList: null,
     };
     events.set(type, eventData);
@@ -27,20 +27,24 @@ export class UniqueEmitter<T extends Events> {
   }
 
   on<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { listeners, emitList } = getOrCreateEventData(this._events, type);
-    if (!listeners.has(listener)) {
-      listeners.add(listener);
-      emitList?.push(listener);
+    const { list, emitList } = getOrCreateEventData(this._events, type);
+    if (!list.has(listener)) {
+      list.add(listener);
+      if (emitList) {
+        emitList.push(listener);
+      }
     }
     return listener;
   }
 
   once<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { listeners, onceListeners, emitList } = getOrCreateEventData(this._events, type);
-    if (!listeners.has(listener)) {
-      listeners.add(listener);
-      onceListeners.add(listener);
-      emitList?.push(listener);
+    const { list, onceList, emitList } = getOrCreateEventData(this._events, type);
+    if (!list.has(listener)) {
+      list.add(listener);
+      onceList.add(listener);
+      if (emitList) {
+        emitList.push(listener);
+      }
     }
     return listener;
   }
@@ -57,45 +61,45 @@ export class UniqueEmitter<T extends Events> {
     }
 
     const eventData = this._events.get(type);
-    if (!eventData) return;
+    if (!eventData || !eventData.list.has(listener)) return;
 
-    eventData.listeners.delete(listener);
-    eventData.onceListeners.delete(listener);
+    eventData.list.delete(listener);
+    eventData.onceList.delete(listener);
     eventData.emitList = null;
 
-    if (!eventData.listeners.size) {
+    if (!eventData.list.size) {
       this._events.delete(type);
     }
   }
 
-  emit<EventType extends keyof T>(type: EventType, data: Parameters<T[EventType]>[0]): void {
+  emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void {
     const eventData = this._events.get(type);
     if (!eventData) return;
 
-    const { listeners, onceListeners, emitList } = eventData;
+    const { list, onceList, emitList } = eventData;
 
-    if (!listeners.size) return;
+    if (!list.size) return;
 
-    const cachedListeners = emitList || [...listeners];
+    const listeners = emitList || [...list];
 
-    if (onceListeners.size) {
-      if (onceListeners.size === listeners.size) {
+    if (onceList.size) {
+      if (onceList.size === list.size) {
         this._events.delete(type);
       } else {
-        for (const listener of onceListeners) {
-          listeners.delete(listener);
+        for (const listener of onceList) {
+          list.delete(listener);
         }
-        onceListeners.clear();
+        onceList.clear();
         eventData.emitList = null;
       }
     } else {
-      eventData.emitList = cachedListeners;
+      eventData.emitList = listeners;
     }
 
     let i = 0;
-    let l = cachedListeners.length;
+    let l = listeners.length;
     for (; i < l; i++) {
-      cachedListeners[i](data);
+      listeners[i](...(args as any[]));
     }
   }
 }

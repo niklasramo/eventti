@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Emitter } from '../dist/emi.modern.js';
+import { Emitter } from '../dist/emi.mjs';
 
 test('.on(event, listener) should return an id (symbol) that can be used to remove the listener', (t) => {
   const emitter = new Emitter();

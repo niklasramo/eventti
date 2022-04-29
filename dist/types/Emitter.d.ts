@@ -5,9 +5,9 @@ declare class EventData {
     onceList: Set<EventListenerId>;
     emitList: EventListener[] | null;
     constructor();
-    addListener(listener: EventListener, once?: boolean): EventListenerId;
-    deleteListener(listenerId: EventListenerId): void;
-    deleteListeners(listener: EventListener): void;
+    add(listener: EventListener, once?: boolean): EventListenerId;
+    delId(listenerId: EventListenerId): void;
+    delFn(listener: EventListener): void;
 }
 export declare class Emitter<T extends Events> {
     protected _events: Map<EventType, EventData>;

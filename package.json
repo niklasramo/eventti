@@ -18,18 +18,22 @@
     "url": "https://github.com/niklasramo"
   },
   "type": "module",
-  "source": "src/index.ts",
-  "exports": "./dist/emi.modern.js",
-  "main": "./dist/emi.cjs",
-  "module": "./dist/emi.module.js",
-  "unpkg": "./dist/emi.umd.js",
+  "main": "./dist/emi.mjs",
+  "module": "./dist/emi.mjs",
+  "exports": {
+    ".": "./dist/emi.mjs",
+    "./emitter": "./dist/emi.emitter.mjs",
+    "./unique-emitter": "./dist/emi.unique-emitter.mjs",
+    "./src/": "./src/"
+  },
   "types": "./dist/types/index.d.ts",
   "files": [
-    "package.json",
-    "tsconfig.json",
     "src",
     "dist",
-    "README.md"
+    "package.json",
+    "tsconfig.json",
+    "README.md",
+    "LICENSE.md"
   ],
   "ava": {
     "files": [
@@ -39,17 +43,31 @@
   "scripts": {
     "test": "ava",
     "dev": "microbundle watch",
-    "build": "npm run ts-check && npm run format && npm run bundle",
-    "bundle": "del ./dist && microbundle --strict --name Emi",
+    "build": "del ./dist && npm run ts-check && npm run format && npm run ts-bundle && npm run bundle && npm run minify && npm run size",
+    "bundle": "$(npm bin)/rollup -c",
+    "ts-bundle": "$(npm bin)/tsc --emitDeclarationOnly",
     "ts-check": "$(npm bin)/tsc --noEmit",
     "format": "$(npm bin)/prettier --write ./src/**/*.ts",
-    "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts"
+    "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
+    "size": "npm run size-umd && npm run size-module",
+    "size-umd": "$(npm bin)/gzip-size ./dist/emi.js --include-original",
+    "size-module": "$(npm bin)/gzip-size ./dist/emi.mjs --include-original",
+    "minify": "npm run min-umd && npm run min-module && npm run min-emitter-umd && npm run min-emitter-module && npm run min-unique-umd && npm run min-unique-module",
+    "min-umd": "$(npm bin)/terser ./dist/emi.js -o ./dist/emi.js --compress --mangle --comments false",
+    "min-module": "$(npm bin)/terser ./dist/emi.mjs -o ./dist/emi.mjs --compress --mangle --comments false",
+    "min-emitter-umd": "$(npm bin)/terser ./dist/emi.emitter.js -o ./dist/emi.emitter.js --compress --mangle --comments false",
+    "min-emitter-module": "$(npm bin)/terser ./dist/emi.emitter.mjs -o ./dist/emi.emitter.mjs --compress --mangle --comments false",
+    "min-unique-umd": "$(npm bin)/terser ./dist/emi.unique-emitter.js -o ./dist/emi.unique-emitter.js --compress --mangle --comments false",
+    "min-unique-module": "$(npm bin)/terser ./dist/emi.unique-emitter.mjs -o ./dist/emi.unique-emitter.mjs --compress --mangle --comments false"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "8.3.2",
     "ava": "4.2.0",
     "del-cli": "4.0.1",
-    "microbundle": "0.14.2",
+    "gzip-size-cli": "5.1.0",
     "prettier": "2.6.2",
-    "typescript": "4.6.3"
+    "rollup": "2.70.2",
+    "terser": "5.13.0",
+    "typescript": "4.6.4"
   }
 }
