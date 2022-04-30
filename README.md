@@ -104,8 +104,8 @@ counter === 1; // true
 You can also import a specific emitter via submodules, like this:
 
 ```typescript
-import { Emitter } from 'emi/emitter';
-import { UniqueEmitter } from 'emi/unique-emitter';
+import { Emitter } from 'eventti/emitter';
+import { UniqueEmitter } from 'eventti/unique-emitter';
 ```
 
 The benefit here is that the submodules only load the code for the specific emitter so you'll save some bytes. However, if you are using a bundler which does some tree shaking you'll probably be fine just importing the emitters from `'eventti'`.
