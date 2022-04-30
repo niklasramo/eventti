@@ -10,12 +10,12 @@ module.exports = [
       {
         name: 'Emi',
         file: `${distFolder}/${pkg.name}.js`,
-        format: 'umd',
+        format: 'es',
       },
       {
         name: 'Emi',
-        file: `${distFolder}/${pkg.name}.mjs`,
-        format: 'es',
+        file: `${distFolder}/${pkg.name}.umd.js`,
+        format: 'umd',
       },
     ],
     plugins: [typescript()],
@@ -26,12 +26,12 @@ module.exports = [
       {
         name: 'Emitter',
         file: `${distFolder}/${pkg.name}.emitter.js`,
-        format: 'umd',
+        format: 'es',
       },
       {
         name: 'Emitter',
-        file: `${distFolder}/${pkg.name}.emitter.mjs`,
-        format: 'es',
+        file: `${distFolder}/${pkg.name}.emitter.umd.js`,
+        format: 'umd',
       },
     ],
     plugins: [typescript()],
@@ -42,12 +42,12 @@ module.exports = [
       {
         name: 'Emitter',
         file: `${distFolder}/${pkg.name}.unique-emitter.js`,
-        format: 'umd',
+        format: 'es',
       },
       {
         name: 'Emitter',
-        file: `${distFolder}/${pkg.name}.unique-emitter.mjs`,
-        format: 'es',
+        file: `${distFolder}/${pkg.name}.unique-emitter.umd.js`,
+        format: 'umd',
       },
     ],
     plugins: [typescript()],

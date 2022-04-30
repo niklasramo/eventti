@@ -18,12 +18,12 @@
     "url": "https://github.com/niklasramo"
   },
   "type": "module",
-  "main": "./dist/emi.mjs",
-  "module": "./dist/emi.mjs",
+  "main": "./dist/emi.js",
+  "module": "./dist/emi.js",
   "exports": {
-    ".": "./dist/emi.mjs",
-    "./emitter": "./dist/emi.emitter.mjs",
-    "./unique-emitter": "./dist/emi.unique-emitter.mjs",
+    ".": "./dist/emi.js",
+    "./emitter": "./dist/emi.emitter.js",
+    "./unique-emitter": "./dist/emi.unique-emitter.js",
     "./src/": "./src/"
   },
   "types": "./dist/types/index.d.ts",
@@ -43,22 +43,26 @@
   "scripts": {
     "test": "ava",
     "dev": "microbundle watch",
-    "build": "del ./dist && npm run ts-check && npm run format && npm run ts-bundle && npm run bundle && npm run minify && npm run size",
+    "build": "del ./dist && npm run ts-check && npm run format && npm run ts-bundle && npm run bundle && npm run min && npm run size",
     "bundle": "$(npm bin)/rollup -c",
     "ts-bundle": "$(npm bin)/tsc --emitDeclarationOnly",
     "ts-check": "$(npm bin)/tsc --noEmit",
     "format": "$(npm bin)/prettier --write ./src/**/*.ts",
     "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
-    "size": "npm run size-umd && npm run size-module",
-    "size-umd": "$(npm bin)/gzip-size ./dist/emi.js --include-original",
-    "size-module": "$(npm bin)/gzip-size ./dist/emi.mjs --include-original",
-    "minify": "npm run min-umd && npm run min-module && npm run min-emitter-umd && npm run min-emitter-module && npm run min-unique-umd && npm run min-unique-module",
-    "min-umd": "$(npm bin)/terser ./dist/emi.js -o ./dist/emi.js --compress --mangle --comments false",
-    "min-module": "$(npm bin)/terser ./dist/emi.mjs -o ./dist/emi.mjs --compress --mangle --comments false",
-    "min-emitter-umd": "$(npm bin)/terser ./dist/emi.emitter.js -o ./dist/emi.emitter.js --compress --mangle --comments false",
-    "min-emitter-module": "$(npm bin)/terser ./dist/emi.emitter.mjs -o ./dist/emi.emitter.mjs --compress --mangle --comments false",
-    "min-unique-umd": "$(npm bin)/terser ./dist/emi.unique-emitter.js -o ./dist/emi.unique-emitter.js --compress --mangle --comments false",
-    "min-unique-module": "$(npm bin)/terser ./dist/emi.unique-emitter.mjs -o ./dist/emi.unique-emitter.mjs --compress --mangle --comments false"
+    "size": "npm run size-esm && npm run size-umd && npm run size-e-esm && npm run size-e-umd && npm run size-u-esm && npm run size-u-umd",
+    "size-esm": "echo emi.js gzip && $(npm bin)/gzip-size ./dist/emi.js --include-original",
+    "size-umd": "echo emi.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.umd.js --include-original",
+    "size-e-esm": "echo emi.emitter.js gzip && $(npm bin)/gzip-size ./dist/emi.emitter.js --include-original",
+    "size-e-umd": "echo emi.emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.emitter.umd.js --include-original",
+    "size-u-esm": "echo emi.unique-emitter.js gzip && $(npm bin)/gzip-size ./dist/emi.unique-emitter.js --include-original",
+    "size-u-umd": "echo emi.unique-emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.unique-emitter.umd.js --include-original",
+    "min": "npm run min-esm && npm run min-umd && npm run min-e-esm && npm run min-e-umd && npm run min-u-esm && npm run min-u-umd",
+    "min-esm": "$(npm bin)/terser ./dist/emi.js -o ./dist/emi.js --compress --mangle --comments false",
+    "min-umd": "$(npm bin)/terser ./dist/emi.umd.js -o ./dist/emi.umd.js --compress --mangle --comments false",
+    "min-e-esm": "$(npm bin)/terser ./dist/emi.emitter.js -o ./dist/emi.emitter.js --compress --mangle --comments false",
+    "min-e-umd": "$(npm bin)/terser ./dist/emi.emitter.umd.js -o ./dist/emi.emitter.umd.js --compress --mangle --comments false",
+    "min-u-esm": "$(npm bin)/terser ./dist/emi.unique-emitter.js -o ./dist/emi.unique-emitter.js --compress --mangle --comments false",
+    "min-u-umd": "$(npm bin)/terser ./dist/emi.unique-emitter.umd.js -o ./dist/emi.unique-emitter.umd.js --compress --mangle --comments false"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "8.3.2",
@@ -66,8 +70,8 @@
     "del-cli": "4.0.1",
     "gzip-size-cli": "5.1.0",
     "prettier": "2.6.2",
-    "rollup": "2.70.2",
-    "terser": "5.13.0",
+    "rollup": "2.71.0",
+    "terser": "5.13.1",
     "typescript": "4.6.4"
   }
 }

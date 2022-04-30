@@ -1,6 +1,6 @@
 # Emi
 
-A fast, small and reliable event emitter. Emi provides the good 'ol event emitter API with stable performance across the browsers and with a few carefully though additions.
+A small, fast and reliable event emitter. Emi provides the good 'ol event emitter API with strict types and solid performance in a compact package.
 
 - The classic event emitter API.
 - Small footprint (under 1kb gzipped).
@@ -24,38 +24,91 @@ Browser
 <script src="emi.umd.js"></script>
 ```
 
-<h2><a id="basic-usage" href="#basic-usage" aria-hidden="true">#</a> Basic usage</h2>
+<h2><a id="usage" href="#usage" aria-hidden="true">#</a> Usage</h2>
+
+Emi can be used just like most other event emitters, nothing new here really.
 
 ```typescript
-import { Emitter, UniqueEmitter } from 'emi';
+import { Emitter } from 'emi';
 
-// Emitter allows duplicate event listeners.
-const emitter = new Emitter();
-const listener = (msg) => console.log(msg);
-emitter.on('test', listener);
-emitter.on('test', listener);
-emitter.emit('test', 'Hello World!');
-// -> "Hello World!" x 2
-emitter.off('test', listener);
+// Define emitter's events (if using TypeScript).
+// Let the key be the event type and the value
+// be the listener callback signature.
+type Events = {
+  a: (msg: string) => void;
+  b: (str: string, num: number) => void;
+};
 
-// UniqueEmitter ignores duplicate event listeners.
-const uniqEmitter = new UniqueEmitter();
-const listener = (msg) => console.log(msg);
-uniqEmitter.on('test', listener);
-uniqEmitter.on('test', listener); // discarded
-uniqEmitter.emit('test', 'Hello World!');
-// -> "Hello World!" x 1
-uniqEmitter.off('test', listener);
+// Create an emitter instance.
+const emitter = new Emitter<Events>();
+
+// Define listeners.
+const a = (msg) => console.log(msg);
+const b = (...args) => console.log(...args);
+
+// Add listeners to events.
+emitter.on('a', a);
+emitter.on('b', b);
+
+// Emit events.
+emitter.emit('a', 'foo');
+// -> foo
+emitter.emit('b', 'bar', 5000);
+// -> bar 5000
+
+// Remove listeners.
+emitter.off('a', a);
+emitter.off('b', b);
 ```
 
-You can also import the specific emitter like this.
+A useful extra feature of Emi is that "on" and "once" methods return a unique listener id, which can be used to remove that specific listener.
+
+```typescript
+import { Emitter } from 'emi';
+
+const emitter = new Emitter();
+const a = () => {};
+
+const a1 = emitter.on('a', a);
+const a2 = emitter.on('a', a);
+const a3 = emitter.on('a', a);
+
+// Remove the second a listener.
+emitter.off('a', a2);
+
+// Remove all a listeners.
+emitter.off('a', a);
+```
+
+Emi's `Emitter` allows duplicate listeners (as do most event emitter implementations), but sometimes it's preferable to disallow duplicate event listeners. For this purpose `Emi` provides the `UniqueEmitter` implementation, which has identical API to `Emitter` with the exception that `.on()` and `.once()` methods return the listener function instead of a symbol.
+
+```typescript
+import { UniqueEmitter } from 'emi';
+
+const emitter = new UniqueEmitter();
+
+let counter = 0;
+
+const a = () => {
+  ++counter;
+};
+
+emitter.on('a', a);
+emitter.on('a', a); // ignored
+emitter.on('a', a); // ignored
+
+emitter.emit('a', 'foo');
+counter === 1; // true
+```
+
+You can also import the specific emitter via submodules, like this:
 
 ```typescript
 import { Emitter } from 'emi/emitter';
 import { UniqueEmitter } from 'emi/unique-emitter';
 ```
 
-The benefit here is that these more specific imports only load the code for the specific emitter so you'll save some bytes. However, if you are using a bundler which does some tree shaking you'll probably be fine just importing the emitters from `'emi'`.
+The benefit here is that the submodules only load the code for the specific emitter so you'll save some bytes. However, if you are using a bundler which does some tree shaking you'll probably be fine just importing the emitters from `'emi'`.
 
 <h2><a id="special-features" href="#special-features" aria-hidden="true">#</a> Special features</h2>
 
@@ -83,11 +136,20 @@ However, instead of cloning the listeners _always_ we can alternatively clone th
 
 <h3><a id="emitter" href="#emitter" aria-hidden="true">#</a> Emitter</h3>
 
-`Emitter` is a constructor function which creates an event emitter instance when instantiated with the `new` keyword.
+`Emitter` is a constructor function which creates an event emitter instance when instantiated with the `new` keyword. When using with TypeScript it's recommended to provide the types for the events (as demonstrated below).
 
 ```javascript
 import { Emitter } from 'emi';
-const emitter = new Emitter();
+
+// Define emitter's events (if using TypeScript).
+// Let the key be the event type and the value
+// be the listener callback signature.
+type Events = {
+  a: (msg: string) => void;
+  b: (str: string, num: number) => void;
+};
+
+const emitter = new Emitter<Events>();
 ```
 
 **Methods**
@@ -242,6 +304,8 @@ emitter.on('test', (...args) => console.log(args.join('-')));
 emitter.emit('test', 1, 2, 3, 'a', 'b', 'c');
 // '1-2-3-a-b-c'
 ```
+
+<h3><a id="unique-emitter" href="#unique-emitter" aria-hidden="true">#</a> Unique Emitter</h3>
 
 <h2><a id="license" href="#license" aria-hidden="true">#</a> License</h2>
 
