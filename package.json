@@ -1,6 +1,6 @@
 {
-  "name": "emi",
-  "version": "0.0.1",
+  "name": "eventti",
+  "version": "1.0.0",
   "description": "A fast, small and reliable event emitter.",
   "keywords": [
     "event",
@@ -18,15 +18,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:niklasramo/emi.git"
+    "url": "git@github.com:niklasramo/eventti.git"
   },
   "type": "module",
-  "main": "./dist/emi.js",
-  "module": "./dist/emi.js",
+  "main": "./dist/eventti.js",
+  "module": "./dist/eventti.js",
   "exports": {
-    ".": "./dist/emi.js",
-    "./emitter": "./dist/emi.emitter.js",
-    "./unique-emitter": "./dist/emi.unique-emitter.js",
+    ".": "./dist/eventti.js",
+    "./emitter": "./dist/eventti.emitter.js",
+    "./unique-emitter": "./dist/eventti.unique-emitter.js",
     "./src/": "./src/",
     "./dist": "./dist/"
   },
@@ -54,19 +54,19 @@
     "format": "$(npm bin)/prettier --write ./src/**/*.ts",
     "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
     "size": "npm run size-esm && npm run size-umd && npm run size-e-esm && npm run size-e-umd && npm run size-u-esm && npm run size-u-umd",
-    "size-esm": "echo emi.js gzip && $(npm bin)/gzip-size ./dist/emi.js --include-original",
-    "size-umd": "echo emi.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.umd.js --include-original",
-    "size-e-esm": "echo emi.emitter.js gzip && $(npm bin)/gzip-size ./dist/emi.emitter.js --include-original",
-    "size-e-umd": "echo emi.emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.emitter.umd.js --include-original",
-    "size-u-esm": "echo emi.unique-emitter.js gzip && $(npm bin)/gzip-size ./dist/emi.unique-emitter.js --include-original",
-    "size-u-umd": "echo emi.unique-emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/emi.unique-emitter.umd.js --include-original",
+    "size-esm": "echo eventti.js gzip && $(npm bin)/gzip-size ./dist/eventti.js --include-original",
+    "size-umd": "echo eventti.umd.js gzip && $(npm bin)/gzip-size ./dist/eventti.umd.js --include-original",
+    "size-e-esm": "echo eventti.emitter.js gzip && $(npm bin)/gzip-size ./dist/eventti.emitter.js --include-original",
+    "size-e-umd": "echo eventti.emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/eventti.emitter.umd.js --include-original",
+    "size-u-esm": "echo eventti.unique-emitter.js gzip && $(npm bin)/gzip-size ./dist/eventti.unique-emitter.js --include-original",
+    "size-u-umd": "echo eventti.unique-emitter.umd.js gzip && $(npm bin)/gzip-size ./dist/eventti.unique-emitter.umd.js --include-original",
     "min": "npm run min-esm && npm run min-umd && npm run min-e-esm && npm run min-e-umd && npm run min-u-esm && npm run min-u-umd",
-    "min-esm": "$(npm bin)/terser ./dist/emi.js -o ./dist/emi.js --compress --mangle --comments false",
-    "min-umd": "$(npm bin)/terser ./dist/emi.umd.js -o ./dist/emi.umd.js --compress --mangle --comments false",
-    "min-e-esm": "$(npm bin)/terser ./dist/emi.emitter.js -o ./dist/emi.emitter.js --compress --mangle --comments false",
-    "min-e-umd": "$(npm bin)/terser ./dist/emi.emitter.umd.js -o ./dist/emi.emitter.umd.js --compress --mangle --comments false",
-    "min-u-esm": "$(npm bin)/terser ./dist/emi.unique-emitter.js -o ./dist/emi.unique-emitter.js --compress --mangle --comments false",
-    "min-u-umd": "$(npm bin)/terser ./dist/emi.unique-emitter.umd.js -o ./dist/emi.unique-emitter.umd.js --compress --mangle --comments false"
+    "min-esm": "$(npm bin)/terser ./dist/eventti.js -o ./dist/eventti.js --compress --mangle --comments false",
+    "min-umd": "$(npm bin)/terser ./dist/eventti.umd.js -o ./dist/eventti.umd.js --compress --mangle --comments false",
+    "min-e-esm": "$(npm bin)/terser ./dist/eventti.emitter.js -o ./dist/eventti.emitter.js --compress --mangle --comments false",
+    "min-e-umd": "$(npm bin)/terser ./dist/eventti.emitter.umd.js -o ./dist/eventti.emitter.umd.js --compress --mangle --comments false",
+    "min-u-esm": "$(npm bin)/terser ./dist/eventti.unique-emitter.js -o ./dist/eventti.unique-emitter.js --compress --mangle --comments false",
+    "min-u-umd": "$(npm bin)/terser ./dist/eventti.unique-emitter.umd.js -o ./dist/eventti.unique-emitter.umd.js --compress --mangle --comments false"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "8.3.2",

@@ -8,12 +8,12 @@ module.exports = [
     input: './src/index.ts',
     output: [
       {
-        name: 'Emi',
+        name: 'Eventti',
         file: `${distFolder}/${pkg.name}.js`,
         format: 'es',
       },
       {
-        name: 'Emi',
+        name: 'Eventti',
         file: `${distFolder}/${pkg.name}.umd.js`,
         format: 'umd',
       },
@@ -40,12 +40,12 @@ module.exports = [
     input: './src/UniqueEmitter.ts',
     output: [
       {
-        name: 'Emitter',
+        name: 'UniqueEmitter',
         file: `${distFolder}/${pkg.name}.unique-emitter.js`,
         format: 'es',
       },
       {
-        name: 'Emitter',
+        name: 'UniqueEmitter',
         file: `${distFolder}/${pkg.name}.unique-emitter.umd.js`,
         format: 'umd',
       },

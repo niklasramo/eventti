@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Emitter } from '../dist/emi.js';
+import { Emitter } from '../dist/eventti.js';
 
 test('.on(event, listener) should return an id (symbol) that can be used to remove the listener', (t) => {
   const emitter = new Emitter();

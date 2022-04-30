@@ -1,5 +1,5 @@
 import test from 'ava';
-import { UniqueEmitter } from '../dist/emi.js';
+import { UniqueEmitter } from '../dist/eventti.js';
 
 test('.on(event, listener) should return the listener function', (t) => {
   const emitter = new UniqueEmitter();
