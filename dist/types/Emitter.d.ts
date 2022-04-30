@@ -1,4 +1,4 @@
-import { EventType, EventListener, EventListenerId, Events } from './types';
+import { EventName, EventListener, EventListenerId, Events } from './types';
 declare class EventData {
     idMap: Map<EventListenerId, EventListener>;
     fnMap: Map<EventListener, Set<EventListenerId>>;
@@ -10,11 +10,11 @@ declare class EventData {
     delFn(listener: EventListener): void;
 }
 export declare class Emitter<T extends Events> {
-    protected _events: Map<EventType, EventData>;
+    protected _events: Map<EventName, EventData>;
     constructor();
-    on<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId;
-    once<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId;
-    off<EventType extends keyof T>(type?: EventType, listener?: T[EventType] | EventListenerId): void;
-    emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void;
+    on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId;
+    once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId;
+    off<EventName extends keyof T>(eventName?: EventName, listener?: T[EventName] | EventListenerId): void;
+    emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void;
 }
 export {};

@@ -1,15 +1,15 @@
-import { EventType, EventListener, Events } from './types';
+import { EventName, EventListener, Events } from './types';
 interface EventData {
     list: Set<EventListener>;
     onceList: Set<EventListener>;
     emitList: EventListener[] | null;
 }
 export declare class UniqueEmitter<T extends Events> {
-    protected _events: Map<EventType, EventData>;
+    protected _events: Map<EventName, EventData>;
     constructor();
-    on<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType];
-    once<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType];
-    off<EventType extends keyof T>(type?: EventType, listener?: T[EventType]): void;
-    emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void;
+    on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): T[EventName];
+    once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): T[EventName];
+    off<EventName extends keyof T>(eventName?: EventName, listener?: T[EventName]): void;
+    emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void;
 }
 export {};

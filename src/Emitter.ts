@@ -1,10 +1,10 @@
-import { EventType, EventListener, EventListenerId, Events } from './types';
+import { EventName, EventListener, EventListenerId, Events } from './types';
 
-function getOrCreateEventData(events: Map<EventType, EventData>, type: EventType) {
-  let eventData = events.get(type);
+function getOrCreateEventData(events: Map<EventName, EventData>, eventName: EventName) {
+  let eventData = events.get(eventName);
   if (!eventData) {
     eventData = new EventData();
-    events.set(type, eventData);
+    events.set(eventName, eventData);
   }
   return eventData;
 }
@@ -87,42 +87,42 @@ class EventData {
 }
 
 export class Emitter<T extends Events> {
-  protected _events: Map<EventType, EventData>;
+  protected _events: Map<EventName, EventData>;
 
   constructor() {
     this._events = new Map();
   }
 
-  on<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    return getOrCreateEventData(this._events, type).add(listener);
+  on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId {
+    return getOrCreateEventData(this._events, eventName).add(listener);
   }
 
-  once<EventType extends keyof T>(type: EventType, listener: T[EventType]): EventListenerId {
-    return getOrCreateEventData(this._events, type).add(listener, true);
+  once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId {
+    return getOrCreateEventData(this._events, eventName).add(listener, true);
   }
 
-  off<EventType extends keyof T>(
-    type?: EventType,
-    listener?: T[EventType] | EventListenerId
+  off<EventName extends keyof T>(
+    eventName?: EventName,
+    listener?: T[EventName] | EventListenerId
   ): void {
-    // If type is undefined, let's remove all listeners from the emitter.
-    if (type === undefined) {
+    // If name is undefined, let's remove all listeners from the emitter.
+    if (eventName === undefined) {
       this._events.clear();
       return;
     }
 
-    // If listener is undefined, let's remove all listeners from the type.
+    // If listener is undefined, let's remove all listeners from the name.
     if (listener === undefined) {
-      this._events.delete(type);
+      this._events.delete(eventName);
       return;
     }
 
     // Let's get the event data for the listener.
-    const eventData = this._events.get(type);
+    const eventData = this._events.get(eventName);
     if (!eventData) return;
 
     // If listener is a function let's delete all instances of it from the
-    // event type.
+    // event name.
     if (typeof listener === 'function') {
       eventData.delFn(listener);
     }
@@ -131,14 +131,14 @@ export class Emitter<T extends Events> {
       eventData.delId(listener);
     }
 
-    // If the event type doesn't have any listeners left let's delete it.
+    // If the event name doesn't have any listeners left let's delete it.
     if (!eventData.idMap.size) {
-      this._events.delete(type);
+      this._events.delete(eventName);
     }
   }
 
-  emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void {
-    const eventData = this._events.get(type);
+  emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void {
+    const eventData = this._events.get(eventName);
     if (!eventData) return;
 
     const { idMap, onceList } = eventData;
@@ -159,7 +159,7 @@ export class Emitter<T extends Events> {
       // If once list has all the listener ids we can just delete the event
       // and be done with it.
       if (onceList.size === idMap.size) {
-        this._events.delete(type);
+        this._events.delete(eventName);
       }
       // Otherwise, let's delete the once listeners one by one.
       else {

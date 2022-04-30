@@ -1,5 +1,5 @@
 import test from 'ava';
-import { UniqueEmitter } from '..';
+import { UniqueEmitter } from '../dist/emi.js';
 
 test('.on(event, listener) should return the listener function', (t) => {
   const emitter = new UniqueEmitter();
@@ -100,7 +100,7 @@ test('.off(event, listener) should remove listeners by function', (t) => {
   t.is(value, 'acd');
 });
 
-test('.off(event) should remove listeners by event type', (t) => {
+test('.off(event) should remove listeners by event name', (t) => {
   const emitter = new UniqueEmitter();
 
   emitter.on('pass', () => {});

@@ -1,6 +1,5 @@
 {
   "name": "emi",
-  "private": true,
   "version": "0.0.1",
   "description": "A fast, small and reliable event emitter.",
   "keywords": [
@@ -17,6 +16,10 @@
     "email": "inramo@gmail.com",
     "url": "https://github.com/niklasramo"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:niklasramo/emi.git"
+  },
   "type": "module",
   "main": "./dist/emi.js",
   "module": "./dist/emi.js",
@@ -24,7 +27,8 @@
     ".": "./dist/emi.js",
     "./emitter": "./dist/emi.emitter.js",
     "./unique-emitter": "./dist/emi.unique-emitter.js",
-    "./src/": "./src/"
+    "./src/": "./src/",
+    "./dist": "./dist/"
   },
   "types": "./dist/types/index.d.ts",
   "files": [

@@ -1,4 +1,4 @@
-import { EventType, EventListener, Events } from './types';
+import { EventName, EventListener, Events } from './types';
 
 interface EventData {
   list: Set<EventListener>;
@@ -6,28 +6,28 @@ interface EventData {
   emitList: EventListener[] | null;
 }
 
-function getOrCreateEventData(events: Map<EventType, EventData>, type: EventType) {
-  let eventData = events.get(type);
+function getOrCreateEventData(events: Map<EventName, EventData>, eventName: EventName) {
+  let eventData = events.get(eventName);
   if (!eventData) {
     eventData = {
       list: new Set(),
       onceList: new Set(),
       emitList: null,
     };
-    events.set(type, eventData);
+    events.set(eventName, eventData);
   }
   return eventData;
 }
 
 export class UniqueEmitter<T extends Events> {
-  protected _events: Map<EventType, EventData>;
+  protected _events: Map<EventName, EventData>;
 
   constructor() {
     this._events = new Map();
   }
 
-  on<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { list, emitList } = getOrCreateEventData(this._events, type);
+  on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): T[EventName] {
+    const { list, emitList } = getOrCreateEventData(this._events, eventName);
     if (!list.has(listener)) {
       list.add(listener);
       if (emitList) {
@@ -37,8 +37,8 @@ export class UniqueEmitter<T extends Events> {
     return listener;
   }
 
-  once<EventType extends keyof T>(type: EventType, listener: T[EventType]): T[EventType] {
-    const { list, onceList, emitList } = getOrCreateEventData(this._events, type);
+  once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): T[EventName] {
+    const { list, onceList, emitList } = getOrCreateEventData(this._events, eventName);
     if (!list.has(listener)) {
       list.add(listener);
       onceList.add(listener);
@@ -49,18 +49,18 @@ export class UniqueEmitter<T extends Events> {
     return listener;
   }
 
-  off<EventType extends keyof T>(type?: EventType, listener?: T[EventType]): void {
-    if (type === undefined) {
+  off<EventName extends keyof T>(eventName?: EventName, listener?: T[EventName]): void {
+    if (eventName === undefined) {
       this._events.clear();
       return;
     }
 
     if (listener === undefined) {
-      this._events.delete(type);
+      this._events.delete(eventName);
       return;
     }
 
-    const eventData = this._events.get(type);
+    const eventData = this._events.get(eventName);
     if (!eventData || !eventData.list.has(listener)) return;
 
     eventData.list.delete(listener);
@@ -68,12 +68,12 @@ export class UniqueEmitter<T extends Events> {
     eventData.emitList = null;
 
     if (!eventData.list.size) {
-      this._events.delete(type);
+      this._events.delete(eventName);
     }
   }
 
-  emit<EventType extends keyof T>(type: EventType, ...args: Parameters<T[EventType]>): void {
-    const eventData = this._events.get(type);
+  emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void {
+    const eventData = this._events.get(eventName);
     if (!eventData) return;
 
     const { list, onceList, emitList } = eventData;
@@ -84,7 +84,7 @@ export class UniqueEmitter<T extends Events> {
 
     if (onceList.size) {
       if (onceList.size === list.size) {
-        this._events.delete(type);
+        this._events.delete(eventName);
       } else {
         for (const listener of onceList) {
           list.delete(listener);

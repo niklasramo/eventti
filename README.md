@@ -1,6 +1,6 @@
 # Emi
 
-A small, fast and reliable event emitter. Emi provides the good 'ol event emitter API with strict types and solid performance in a compact package.
+A small, fast and reliable event emitter. Emi provides the good 'ol event emitter API with strict types and solid performance in a compact package. As a special extra feature Emi provides a way to remove _specific_ event listeners in scenarios where you have duplicate event listeners.
 
 - The classic event emitter API.
 - Small footprint (under 1kb gzipped).
@@ -32,7 +32,7 @@ Emi can be used just like most other event emitters, nothing new here really.
 import { Emitter } from 'emi';
 
 // Define emitter's events (if using TypeScript).
-// Let the key be the event type and the value
+// Let the key be the event name and the value
 // be the listener callback signature.
 type Events = {
   a: (msg: string) => void;
@@ -61,7 +61,7 @@ emitter.off('a', a);
 emitter.off('b', b);
 ```
 
-A useful extra feature of Emi is that "on" and "once" methods return a unique listener id, which can be used to remove that specific listener.
+A useful extra feature of Emi is that `.on()` and `.once()` methods return a unique listener id, which can be used to remove that specific listener.
 
 ```typescript
 import { Emitter } from 'emi';
@@ -101,7 +101,7 @@ emitter.emit('a', 'foo');
 counter === 1; // true
 ```
 
-You can also import the specific emitter via submodules, like this:
+You can also import a specific emitter via submodules, like this:
 
 ```typescript
 import { Emitter } from 'emi/emitter';
@@ -142,7 +142,7 @@ However, instead of cloning the listeners _always_ we can alternatively clone th
 import { Emitter } from 'emi';
 
 // Define emitter's events (if using TypeScript).
-// Let the key be the event type and the value
+// Let the key be the event name and the value
 // be the listener callback signature.
 type Events = {
   a: (msg: string) => void;
@@ -154,18 +154,18 @@ const emitter = new Emitter<Events>();
 
 **Methods**
 
-- [on( eventType, listener )](#emitter-on)
-- [once( eventType, listener, )](#emitter-once)
-- [off( [eventType], [target] )](#emitter-off)
-- [emit( eventType, [...args] )](#emitter-emit)
+- [on( eventName, listener )](#emitter-on)
+- [once( eventName, listener, )](#emitter-once)
+- [off( [eventName], [target] )](#emitter-off)
+- [emit( eventName, [...args] )](#emitter-emit)
 
-<h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventType, listener )</code></h3>
+<h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventName, listener )</code></h3>
 
 Add a listener to an event. You can add the same listener multiple times.
 
 **Arguments**
 
-- **eventType** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
+- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
   - The event specified as a string, number or symbol.
 - **listener** &nbsp;&mdash;&nbsp; _Function_
   - A listener function that will be called when the event is emitted.
@@ -206,13 +206,13 @@ emitter.emit('test');
 // b
 ```
 
-<h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventType, listener )</code></h3>
+<h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventName, listener )</code></h3>
 
 Add a one-off listener to an event. You can add the same listener multiple times.
 
 **Arguments**
 
-- **eventType** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
+- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
   - The event specified as a string, number or symbol.
 - **listener** &nbsp;&mdash;&nbsp; _Function_
   - A listener function that will be called when the event is emitted.
@@ -241,13 +241,13 @@ emitter.emit('test');
 // a
 ```
 
-<h3><a id="emitter-off" href="#emitter-off" aria-hidden="true">#</a> <code>emitter.off( [eventType], [target] )</code></h3>
+<h3><a id="emitter-off" href="#emitter-off" aria-hidden="true">#</a> <code>emitter.off( [eventName], [target] )</code></h3>
 
-Remove an event listener or multiple event listeners. If no _target_ is provided all listeners for the specified event will be removed. If no _eventType_ is provided all listeners from the emitter will be removed.
+Remove an event listener or multiple event listeners. If no _target_ is provided all listeners for the specified event will be removed. If no _eventName_ is provided all listeners from the emitter will be removed.
 
 **Arguments**
 
-- **eventType** &nbsp;&mdash;&nbsp; _String / Number / Symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_ &nbsp;&mdash;&nbsp; _optional_
   - The event specified as a string, number or symbol.
 - **target** &nbsp;&mdash;&nbsp; _Function / Symbol_ &nbsp;&mdash;&nbsp; _optional_
   - Target removable event listeners by specific function or listener id. If no _target_ is provided all listeners for the specified event will be removed.
@@ -280,13 +280,13 @@ emitter.off('test');
 emitter.off();
 ```
 
-<h3><a id="emitter-emit" href="#emitter-emit" aria-hidden="true">#</a> <code>emitter.emit( eventType, [...args] )</code></h3>
+<h3><a id="emitter-emit" href="#emitter-emit" aria-hidden="true">#</a> <code>emitter.emit( eventName, [...args] )</code></h3>
 
 Emit events.
 
 **Arguments**
 
-- **eventType** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
+- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
   - The event specified as a string, number or symbol.
 - **...args** &nbsp;&mdash;&nbsp; _any_ &nbsp;&mdash;&nbsp; _optional_
   - The arguments which will be provided to the listeners when called.
