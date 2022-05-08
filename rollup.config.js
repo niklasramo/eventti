@@ -20,36 +20,4 @@ module.exports = [
     ],
     plugins: [typescript()],
   },
-  {
-    input: './src/Emitter.ts',
-    output: [
-      {
-        name: 'Emitter',
-        file: `${distFolder}/${pkg.name}.emitter.js`,
-        format: 'es',
-      },
-      {
-        name: 'Emitter',
-        file: `${distFolder}/${pkg.name}.emitter.umd.js`,
-        format: 'umd',
-      },
-    ],
-    plugins: [typescript()],
-  },
-  {
-    input: './src/UniqueEmitter.ts',
-    output: [
-      {
-        name: 'UniqueEmitter',
-        file: `${distFolder}/${pkg.name}.unique-emitter.js`,
-        format: 'es',
-      },
-      {
-        name: 'UniqueEmitter',
-        file: `${distFolder}/${pkg.name}.unique-emitter.umd.js`,
-        format: 'umd',
-      },
-    ],
-    plugins: [typescript()],
-  },
 ];

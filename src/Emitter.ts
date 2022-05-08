@@ -93,6 +93,45 @@ export class Emitter<T extends Events> {
     this._events = new Map();
   }
 
+  protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null {
+    const eventData = this._events.get(eventName);
+    if (!eventData) return null;
+
+    const { idMap, onceList } = eventData;
+
+    // Return early if there are no listeners.
+    if (!idMap.size) return null;
+
+    // Get the listeners for this emit process. If we have cached listeners
+    // in event data (emit list) we use that, and fallback to cloning the
+    // listeners from the id map. The listeners we loop should be just a
+    // simple array for best performance. Cloning the listeners is expensive,
+    // which is why we do it only when absolutely needed.
+    const listeners = eventData.emitList || [...idMap.values()];
+
+    // Delete all once listeners _after_ the clone operation. We don't want
+    // to touch the cloned/cached listeners here, but only the "live" data.
+    if (onceList.size) {
+      // If once list has all the listener ids we can just delete the event
+      // and be done with it.
+      if (onceList.size === idMap.size) {
+        this._events.delete(eventName);
+      }
+      // Otherwise, let's delete the once listeners one by one.
+      else {
+        for (const listenerId of onceList) {
+          eventData.delId(listenerId);
+        }
+      }
+    }
+    // In case there are no once listeners we can cache the listeners array.
+    else {
+      eventData.emitList = listeners;
+    }
+
+    return listeners;
+  }
+
   on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId {
     return getOrCreateEventData(this._events, eventName).add(listener);
   }
@@ -138,40 +177,8 @@ export class Emitter<T extends Events> {
   }
 
   emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void {
-    const eventData = this._events.get(eventName);
-    if (!eventData) return;
-
-    const { idMap, onceList } = eventData;
-
-    // Return early if there are no listeners.
-    if (!idMap.size) return;
-
-    // Get the listeners for this emit process. If we have cached listeners
-    // in event data (emit list) we use that, and fallback to cloning the
-    // listeners from the id map. The listeners we loop should be just a
-    // simple array for best performance. Cloning the listeners is expensive,
-    // which is why we do it only when absolutely needed.
-    const listeners = eventData.emitList || [...idMap.values()];
-
-    // Delete all once listeners _after_ the clone operation. We don't want
-    // to touch the cloned/cached listeners here, but only the "live" data.
-    if (onceList.size) {
-      // If once list has all the listener ids we can just delete the event
-      // and be done with it.
-      if (onceList.size === idMap.size) {
-        this._events.delete(eventName);
-      }
-      // Otherwise, let's delete the once listeners one by one.
-      else {
-        for (const listenerId of onceList) {
-          eventData.delId(listenerId);
-        }
-      }
-    }
-    // In case there are no once listeners we can cache the listeners array.
-    else {
-      eventData.emitList = listeners;
-    }
+    const listeners = this._getListeners(eventName);
+    if (!listeners) return;
 
     // Execute the current event listeners. Basic for loop for the win. Here
     // it's important to cache the listeners' length as the listeners array may
@@ -181,5 +188,9 @@ export class Emitter<T extends Events> {
     for (; i < l; i++) {
       listeners[i](...(args as any[]));
     }
+  }
+
+  listenerCount<EventName extends keyof T>(eventName: EventName): void | number {
+    return this._events.get(eventName)?.idMap.size;
   }
 }

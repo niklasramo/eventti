@@ -12,9 +12,11 @@ declare class EventData {
 export declare class Emitter<T extends Events> {
     protected _events: Map<EventName, EventData>;
     constructor();
+    protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null;
     on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId;
     once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId;
     off<EventName extends keyof T>(eventName?: EventName, listener?: T[EventName] | EventListenerId): void;
     emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void;
+    listenerCount<EventName extends keyof T>(eventName: EventName): void | number;
 }
 export {};

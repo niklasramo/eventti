@@ -26,6 +26,33 @@ export class UniqueEmitter<T extends Events> {
     this._events = new Map();
   }
 
+  protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null {
+    const eventData = this._events.get(eventName);
+    if (!eventData) return null;
+
+    const { list, onceList, emitList } = eventData;
+
+    if (!list.size) return null;
+
+    const listeners = emitList || [...list];
+
+    if (onceList.size) {
+      if (onceList.size === list.size) {
+        this._events.delete(eventName);
+      } else {
+        for (const listener of onceList) {
+          list.delete(listener);
+        }
+        onceList.clear();
+        eventData.emitList = null;
+      }
+    } else {
+      eventData.emitList = listeners;
+    }
+
+    return listeners;
+  }
+
   on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): T[EventName] {
     const { list, emitList } = getOrCreateEventData(this._events, eventName);
     if (!list.has(listener)) {
@@ -73,33 +100,17 @@ export class UniqueEmitter<T extends Events> {
   }
 
   emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void {
-    const eventData = this._events.get(eventName);
-    if (!eventData) return;
-
-    const { list, onceList, emitList } = eventData;
-
-    if (!list.size) return;
-
-    const listeners = emitList || [...list];
-
-    if (onceList.size) {
-      if (onceList.size === list.size) {
-        this._events.delete(eventName);
-      } else {
-        for (const listener of onceList) {
-          list.delete(listener);
-        }
-        onceList.clear();
-        eventData.emitList = null;
-      }
-    } else {
-      eventData.emitList = listeners;
-    }
+    const listeners = this._getListeners(eventName);
+    if (!listeners) return;
 
     let i = 0;
     let l = listeners.length;
     for (; i < l; i++) {
       listeners[i](...(args as any[]));
     }
+  }
+
+  listenerCount<EventName extends keyof T>(eventName: EventName): void | number {
+    return this._events.get(eventName)?.list.size;
   }
 }
