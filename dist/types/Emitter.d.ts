@@ -17,6 +17,6 @@ export declare class Emitter<T extends Events> {
     once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId;
     off<EventName extends keyof T>(eventName?: EventName, listener?: T[EventName] | EventListenerId): void;
     emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void;
-    listenerCount<EventName extends keyof T>(eventName: EventName): void | number;
+    listenerCount<EventName extends keyof T>(eventName?: EventName): void | number;
 }
 export {};

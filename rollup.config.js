@@ -1,20 +1,18 @@
 import typescript from '@rollup/plugin-typescript';
 import pkg from './package.json';
 
-const distFolder = './dist';
-
 module.exports = [
   {
-    input: './src/index.ts',
+    input: pkg.source,
     output: [
       {
-        name: 'Eventti',
-        file: `${distFolder}/${pkg.name}.js`,
+        name: pkg.name,
+        file: pkg.main,
         format: 'es',
       },
       {
-        name: 'Eventti',
-        file: `${distFolder}/${pkg.name}.umd.js`,
+        name: pkg.name,
+        file: pkg['umd:main'],
         format: 'umd',
       },
     ],

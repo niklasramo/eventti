@@ -40,9 +40,7 @@ export class UniqueEmitter<T extends Events> {
       if (onceList.size === list.size) {
         this._events.delete(eventName);
       } else {
-        for (const listener of onceList) {
-          list.delete(listener);
-        }
+        onceList.forEach((listener) => list.delete(listener));
         onceList.clear();
         eventData.emitList = null;
       }
@@ -110,7 +108,14 @@ export class UniqueEmitter<T extends Events> {
     }
   }
 
-  listenerCount<EventName extends keyof T>(eventName: EventName): void | number {
+  listenerCount<EventName extends keyof T>(eventName?: EventName): void | number {
+    if (eventName === undefined) {
+      let count = 0;
+      this._events.forEach((_value, key) => {
+        count += this.listenerCount(key) || 0;
+      });
+      return count;
+    }
     return this._events.get(eventName)?.list.size;
   }
 }

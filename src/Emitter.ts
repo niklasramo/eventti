@@ -76,10 +76,10 @@ class EventData {
     const listenerIds = this.fnMap.get(listener);
     if (!listenerIds) return;
 
-    for (const listenerId of listenerIds) {
+    listenerIds.forEach((listenerId) => {
       this.onceList.delete(listenerId);
       this.idMap.delete(listenerId);
-    }
+    });
 
     this.fnMap.delete(listener);
     this.emitList = null;
@@ -190,7 +190,14 @@ export class Emitter<T extends Events> {
     }
   }
 
-  listenerCount<EventName extends keyof T>(eventName: EventName): void | number {
+  listenerCount<EventName extends keyof T>(eventName?: EventName): void | number {
+    if (eventName === undefined) {
+      let count = 0;
+      this._events.forEach((_value, key) => {
+        count += this.listenerCount(key) || 0;
+      });
+      return count;
+    }
     return this._events.get(eventName)?.idMap.size;
   }
 }

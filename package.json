@@ -21,14 +21,15 @@
     "url": "git@github.com:niklasramo/eventti.git"
   },
   "type": "module",
+  "source": "./src/index.ts",
   "main": "./dist/eventti.js",
+  "umd:main": "./dist/eventti.umd.js",
   "module": "./dist/eventti.js",
   "types": "./dist/types/index.d.ts",
   "files": [
     "src",
     "dist",
     "package.json",
-    "tsconfig.json",
     "README.md",
     "LICENSE.md"
   ],
@@ -38,12 +39,12 @@
     ]
   },
   "scripts": {
-    "test": "ava",
-    "build": "del ./dist && npm run ts-check && npm run format && npm run ts-bundle && npm run bundle && npm run minify && npm run size",
+    "test": "npm run ts-check-usage && ava",
+    "build": "del ./dist && npm run ts-check-source && npm run format && npm run ts-build-types && npm run bundle && npm run minify && npm run size",
     "bundle": "$(npm bin)/rollup -c",
-    "ts-bundle": "$(npm bin)/tsc --emitDeclarationOnly",
-    "ts-check": "$(npm bin)/tsc --noEmit",
-    "ts-test": "$(npm bin)/tsc ./test/types.ts --noEmit --lib ESNext",
+    "ts-build-types": "$(npm bin)/tsc --emitDeclarationOnly --declaration --declarationDir ./dist/types",
+    "ts-check-source": "$(npm bin)/tsc --noEmit",
+    "ts-check-usage": "$(npm bin)/tsc ./test/types.ts --noEmit --lib ESNext",
     "format": "$(npm bin)/prettier --write ./src/**/*.ts",
     "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
     "size": "for file in ./dist/*.js; do echo $file && $(npm bin)/gzip-size $file --include-original; done",
