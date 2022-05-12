@@ -24,6 +24,8 @@ Browser
 <script src="eventti.umd.js"></script>
 ```
 
+You can access the emitters via `window.eventti` global variable in browser context. 
+
 <h2><a id="usage" href="#usage" aria-hidden="true">#</a> Usage</h2>
 
 Eventti can be used just like most other event emitters, nothing new here really.
