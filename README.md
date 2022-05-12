@@ -149,6 +149,7 @@ const emitter = new Emitter<Events>();
 - [once( eventName, listener, )](#emitter-once)
 - [off( [eventName], [target] )](#emitter-off)
 - [emit( eventName, [...args] )](#emitter-emit)
+- [listenerCount( [eventName] )](#emitter-listenerCount)
 
 <h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventName, listener )</code></h3>
 
@@ -264,10 +265,10 @@ emitter.off('test', id2);
 // Remove all instances of a specific listener function.
 emitter.off('test', a);
 
-// Remove all listeners of an event.
+// Remove all listeners from an event.
 emitter.off('test');
 
-// Remove all listeners of the emitter.
+// Remove all listeners from the emitter.
 emitter.off();
 ```
 
@@ -294,6 +295,35 @@ emitter.on('test', (...args) => console.log(args.join('-')));
 // Provide arguments to the event's listeners.
 emitter.emit('test', 1, 2, 3, 'a', 'b', 'c');
 // '1-2-3-a-b-c'
+```
+
+<h3><a id="emitter-listenerCount" href="#emitter-listenerCount" aria-hidden="true">#</a> <code>emitter.listenerCount( [eventName] )</code></h3>
+
+Returns the listener count for an event if _eventName_ is provided. Otherwise returns the listener count for the whole emitter.
+
+**Arguments**
+
+- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
+  - The event specified as a string, number or symbol.
+
+**Examples**
+
+```javascript
+import { Emitter } from 'eventti';
+
+const emitter = new Emitter();
+
+emitter.on('a', () => {});
+emitter.on('b', () => {});
+emitter.on('b', () => {});
+emitter.on('c', () => {});
+emitter.on('c', () => {});
+emitter.on('c', () => {});
+
+emitter.listenerCount('a'); // 1
+emitter.listenerCount('b'); // 2
+emitter.listenerCount('c'); // 3
+emitter.listenerCount(); // 6
 ```
 
 <h2><a id="license" href="#license" aria-hidden="true">#</a> License</h2>
