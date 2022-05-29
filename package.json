@@ -56,8 +56,8 @@
     "del-cli": "4.0.1",
     "gzip-size-cli": "5.1.0",
     "prettier": "2.6.2",
-    "rollup": "2.72.1",
+    "rollup": "2.75.1",
     "terser": "5.13.1",
-    "typescript": "4.6.4"
+    "typescript": "4.7.2"
   }
 }
