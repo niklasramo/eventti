@@ -24,7 +24,7 @@ Browser
 <script src="eventti.umd.js"></script>
 ```
 
-You can access the emitters via `window.eventti` global variable in browser context. 
+You can access the emitters via `window.eventti` global variable in browser context.
 
 <h2><a id="usage" href="#usage" aria-hidden="true">#</a> Usage</h2>
 
@@ -121,9 +121,7 @@ You might be wondering why there is a separate implementation for this simple fu
 
 <h3><a id="feat-3" href="#feat-3" aria-hidden="true">#</a> Faster emits with cached listener queue</h3>
 
-One common performance issue in almost all event emitter implementations is that they _always_ clone the listeners before looping them when an event is emitted. The cloning _is_ pretty crucial for correct functionality, because otherwise you risk the listener queue being manipulated during processing which again might lead to incorrect/unexpected behavior.
-
-However, instead of cloning the listeners _always_ we can alternatively clone them only _when necessary_, which is what Eventti does internally. Eventti uses a simple caching approach where the listener queue is cached on emit. The cache is then updated on listener addition and invalidated on listener removal. This gives a nice performance boost to all emit calls when we can use the cache.
+One common performance issue in almost all event emitter implementations is that they _always_ clone the listener queue when an event is emitted. Although the cloning part _is_ pretty crucial for correct functionality we can speed things up by cloning the listener queue only _when necessary_, which is what Eventti does internally. Eventti uses a simple caching mechanism, which gives a nice performance boost to emit calls when the cache can be used.
 
 <h2><a id="api" href="#api" aria-hidden="true">#</a> API</h2>
 
@@ -244,7 +242,7 @@ Remove an event listener or multiple event listeners. If no _target_ is provided
 - **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_ &nbsp;&mdash;&nbsp; _optional_
   - The event specified as a string, number or symbol.
 - **target** &nbsp;&mdash;&nbsp; _Function / Symbol_ &nbsp;&mdash;&nbsp; _optional_
-  - Target removable event listeners by specific function or listener id. If no _target_ is provided all listeners for the specified event will be removed.
+  - The event listener or listener id, which needs to be removed. If no _target_ is provided all listeners for the specified event will be removed.
 
 **Examples**
 
