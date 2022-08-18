@@ -143,7 +143,7 @@ emitter3.emit('a');
 // -> bar
 
 // Case #4: When the dedupe mode is set to "throw" an error is thrown.
-const emitter4 = new Emitter({ dedupe: 'ignore' });
+const emitter4 = new Emitter({ dedupe: 'throw' });
 emitter4.on('a', () => console.log('foo 1'), 'foo');
 emitter4.on('a', () => console.log('bar'), 'bar');
 emitter4.on('a', () => console.log('foo 2'), 'foo'); // throws an error
