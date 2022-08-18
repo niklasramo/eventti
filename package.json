@@ -1,7 +1,7 @@
 {
   "name": "eventti",
-  "version": "2.0.1",
-  "description": "A fast, small and reliable event emitter.",
+  "version": "3.0.0",
+  "description": "Tiny and fast multi-purpose event emitter wrapped in a simple API.",
   "keywords": [
     "event",
     "events",
@@ -45,19 +45,19 @@
     "ts-build-types": "$(npm bin)/tsc --emitDeclarationOnly --declaration --declarationDir ./dist/types",
     "ts-check-source": "$(npm bin)/tsc --noEmit",
     "ts-check-usage": "$(npm bin)/tsc ./test/types.ts --noEmit --lib ESNext",
-    "format": "$(npm bin)/prettier --write ./src/**/*.ts",
-    "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
+    "format": "$(npm bin)/prettier --write ./src/",
+    "validate": "$(npm bin)/prettier --list-different ./src/",
     "size": "for file in ./dist/*.js; do echo $file && $(npm bin)/gzip-size $file --include-original; done",
     "minify": "for file in ./dist/*.js; do $(npm bin)/terser $file -o $file --compress --mangle --comments false; done"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "8.3.2",
-    "ava": "4.2.0",
-    "del-cli": "4.0.1",
+    "@rollup/plugin-typescript": "8.3.4",
+    "ava": "4.3.1",
+    "del-cli": "5.0.0",
     "gzip-size-cli": "5.1.0",
-    "prettier": "2.6.2",
-    "rollup": "2.75.1",
-    "terser": "5.13.1",
-    "typescript": "4.7.2"
+    "prettier": "2.7.1",
+    "rollup": "2.78.0",
+    "terser": "5.14.2",
+    "typescript": "4.7.4"
   }
 }

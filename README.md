@@ -1,11 +1,15 @@
 # Eventti
 
-A small, fast and reliable event emitter. Eventti provides the good 'ol event emitter API with strict types and solid performance in a compact package. As a special extra feature Eventti provides a way to remove _specific_ event listeners in scenarios where you have duplicate event listeners.
+Tiny and fast multi-purpose event emitter wrapped in a simple API.
 
-- The classic event emitter API.
+By default Eventti allows adding duplicate listeners to an event, but you can configure the Emitter to throw an error when a duplicate event listener is added. Additionally, Eventti assigns unique ids to all event listeners which allows you to granularly remove specific listeners (when there are duplicate listeners) and also update/replace existing listeners in the emitter.
+
+Regarding performance, one common issue in most event emitter implementations is that they _always_ clone the listener queue on emit. Although the cloning _is_ required for correct functionality we can speed things up by cloning the listener queue _only when necessary_, which is what Eventti does internally.
+
+- The classic event emitter API with useful extras.
 - Small footprint (under 1kb gzipped).
-- Highly optimized and stable performance.
-- Written in TypeScript.
+- Highly optimized and stable performance across browsers.
+- Written in TypeScript with strict types.
 - Works in Node.js and modern browsers.
 - No dependencies.
 - MIT licensed.
@@ -14,8 +18,8 @@ A small, fast and reliable event emitter. Eventti provides the good 'ol event em
 
 Node
 
-```
-npm install eventti
+```bash
+$ npm install eventti
 ```
 
 Browser
@@ -24,11 +28,13 @@ Browser
 <script src="eventti.umd.js"></script>
 ```
 
-You can access the emitters via `window.eventti` global variable in browser context.
+Access the emitter via `window.eventti.Emitter` in browser context.
 
 <h2><a id="usage" href="#usage" aria-hidden="true">#</a> Usage</h2>
 
-Eventti can be used just like most other event emitters, nothing new here really.
+<h3><a id="basic-usage" href="#basic-usage" aria-hidden="true">#</a> Basic usage</h3>
+
+Basic usage is pretty much identical to most other event emitters, nothing new here really.
 
 ```typescript
 import { Emitter } from 'eventti';
@@ -63,73 +69,102 @@ emitter.off('a', a);
 emitter.off('b', b);
 ```
 
-A useful extra feature of Eventti is that `.on()` and `.once()` methods return a unique listener id, which can be used to remove that specific listener.
+<h3><a id="usage-duplicate-listeners" href="#usage-duplicate-listeners" aria-hidden="true">#</a> Preventing duplicate listener</h3>
+
+Eventti's `Emitter` allows duplicate listeners by default (as do most event emitter implementations), but sometimes it's preferable to disallow duplicate event listeners.
 
 ```typescript
 import { Emitter } from 'eventti';
 
-const emitter = new Emitter();
-const a = () => {};
+const emitter = new Emitter({ allowDuplicateListener: false });
+const listener = () => {};
 
-const a1 = emitter.on('a', a);
-const a2 = emitter.on('a', a);
-const a3 = emitter.on('a', a);
-
-// Remove the second a listener.
-emitter.off('a', a2);
-
-// Remove all a listeners.
-emitter.off('a', a);
+emitter.on('a', listener);
+emitter.on('a', listener); // throws an error
 ```
 
-Eventti's `Emitter` allows duplicate listeners (as do most event emitter implementations), but sometimes it's preferable to disallow duplicate event listeners. For this purpose Eventti provides the `UniqueEmitter` implementation, which has identical API to `Emitter` with the exception that `.on()` and `.once()` methods return the listener function instead of a symbol.
+<h3><a id="usage-listener-id" href="#usage-listener-id" aria-hidden="true">#</a> Event listener ids</h3>
+
+A useful extra feature of Eventti is that `.on()` and `.once()` methods return a unique listener id, which can be used to remove that specific listener. You can also provide the listener id manually via those methods and control how duplicate listener ids are handled.
 
 ```typescript
-import { UniqueEmitter } from 'eventti';
+import { Emitter } from 'eventti';
 
-const emitter = new UniqueEmitter();
+const emitter1 = new Emitter();
 
-let counter = 0;
+// When you bind a listener a unique listener id (symbol) is automatically
+// created and returned.
+const a1 = emitter1.on('a', listener);
+const a2 = emitter1.once('a', listener);
+emitter1.off('a', a1);
+emitter1.off('a', a2);
 
-const a = () => {
-  ++counter;
-};
+// You can also provide the id manually via a third argument.
+emitter1.on('a', listener, 'foo');
+emitter1.on('a', listener, 'bar');
+emitter1.off('a', 'foo');
+emitter1.off('a', 'bar');
 
-emitter.on('a', a);
-emitter.on('a', a); // ignored
-emitter.on('a', a); // ignored
+// The listener id is unique and there can only be one listener attached to
+// an id at given time. So what should happen when you try to add the same
+// listener id again? Well, it's up to you and Eventti allows you to choose from
+// four different options what the behaviour should be.
 
-emitter.emit('a', 'foo');
-counter === 1; // true
+// Case #1: When the dedupe mode is set to "add" (which it is by default) the
+// existing listener will be first completely removed and then the new listener
+// will be added in the end of the listener queue.
+const emitter2 = new Emitter({ dedupe: 'add' });
+emitter2.on('a', () => console.log('foo 1'), 'foo');
+emitter2.on('a', () => console.log('bar'), 'bar');
+emitter2.on('a', () => console.log('foo 2'), 'foo');
+emitter2.emit('a');
+// -> bar
+// -> foo 2
+
+// Case #2: When the dedupe mode is set to "replace" the existing listener will
+// be replaced by the new listener while keeping the listener at the same index
+// in the listener queue.
+const emitter3 = new Emitter({ dedupe: 'replace' });
+emitter3.on('a', () => console.log('foo 1'), 'foo');
+emitter3.on('a', () => console.log('bar'), 'bar');
+emitter3.on('a', () => console.log('foo 2'), 'foo');
+emitter3.emit('a');
+// -> foo 2
+// -> bar
+
+// Case #3: When the dedupe mode is set to "ignore" the new listener is simply
+// ignored.
+const emitter4 = new Emitter({ dedupe: 'ignore' });
+emitter4.on('a', () => console.log('foo 1'), 'foo');
+emitter4.on('a', () => console.log('bar'), 'bar');
+emitter4.on('a', () => console.log('foo 2'), 'foo');
+emitter4.emit('a');
+// -> foo 1
+// -> bar
+
+// Case #4: When the dedupe mode is set to "throw" an error is thrown.
+const emitter4 = new Emitter({ dedupe: 'ignore' });
+emitter4.on('a', () => console.log('foo 1'), 'foo');
+emitter4.on('a', () => console.log('bar'), 'bar');
+emitter4.on('a', () => console.log('foo 2'), 'foo'); // throws an error
 ```
 
-<h2><a id="special-features" href="#special-features" aria-hidden="true">#</a> Special features</h2>
+<h2><a id="api" href="#api" aria-hidden="true">#</a> Emitter API</h2>
 
-<h3><a id="feat-1" href="#feat-1" aria-hidden="true">#</a> Removing specific listeners</h3>
+`Emitter` is a class which's constructor accepts an optional configuration object with the following properties:
 
-Event emitters, which allow adding multiple instances of the same listener to an event, usually have a bit of varying behavior when it comes to removing those duplicate listeners. Calling `emitter.off('test', listener)` usually removes either the first instance of `listener` _or_ all instances of `listener`. What's missing is a way to delete specific listeners.
+- **allowDuplicateListeners** &nbsp;&mdash;&nbsp; _boolean_
+  - When set to `false` `.on()` or `.once()` methods will throw an error if a duplicate event listener is added.
+  - Optional. Defaults to `true` if omitted.
+- **dedupe** &nbsp;&mdash;&nbsp; _"ignore" | "throw" | "add" | "replace"_
+  - Defines how a duplicate event listener id is handled when you provide it manually via `.on()` or `.once()` method.
+    - `"ignore"`: the new listener is silently ignored and not added to the event.
+    - `"throw"`: as the name suggests an error will be thrown.
+    - `"add"`: the existing listener is removed fully before the new listener is added to the event (at the end of the listener queue).
+    - `"replace"`: the existing listener is replaced with the new listener (at the existing listeners index in the queue).
+  - Optional. Defaults to `"add"` if omitted.
 
-Eventti's `emitter.on()` and `emitter.once()` methods return a unique listener id (symbol), which can be used to remove that specific listener. In addition to that Eventti also allows you to remove listener instances based on the listener function in which case all instances of the listener function are removed.
-
-Check out the documentation for [`emitter.off()`](#emitter-off) to see an example of this.
-
-<h3><a id="feat-2" href="#feat-2" aria-hidden="true">#</a> Preventing duplicate listeners</h3>
-
-Eventti's `Emitter` allows adding duplicate event listeners to events, but sometimes you might not want that behavior. To cater for scenarios where duplicate event listeners need to be automatically ignored Eventti provides `UniqueEmitter`. The API is identical to that of `Emitter`'s with the exception that `emitter.on()` and `emitter.once()` methods return the provided listener function instead of a symbol as the unique listener id.
-
-You might be wondering why there is a separate implementation for this simple functionality, which _could_ be added to `Emitter` (as an option) with a few lines of code. Well, it turns out that when you can't have duplicate listeners you can keep the data structure more compact (at least in this specific case) and also increase the performance a little bit in certain scenarios. This way we can provide the optimal code for this specific use case.
-
-<h3><a id="feat-3" href="#feat-3" aria-hidden="true">#</a> Faster emits with cached listener queue</h3>
-
-One common performance issue in almost all event emitter implementations is that they _always_ clone the listener queue when an event is emitted. Although the cloning part _is_ pretty crucial for correct functionality we can speed things up by cloning the listener queue only _when necessary_, which is what Eventti does internally. Eventti uses a simple caching mechanism, which gives a nice performance boost to emit calls when the cache can be used.
-
-<h2><a id="api" href="#api" aria-hidden="true">#</a> API</h2>
-
-<h3><a id="emitter" href="#emitter" aria-hidden="true">#</a> Emitter</h3>
-
-`Emitter` is a constructor function which creates an event emitter instance when instantiated with the `new` keyword. When using with TypeScript it's recommended to provide the types for the events (as demonstrated below).
-
-```javascript
+```typescript
 import { Emitter } from 'eventti';
 
 // Define emitter's events (if using TypeScript).
@@ -140,29 +175,45 @@ type Events = {
   b: (str: string, num: number) => void;
 };
 
-const emitter = new Emitter<Events>();
+// Create emitter instance.
+const emitterA = new Emitter<Events>();
+
+// Create emitter instance with options.
+const emitterB = new Emitter<Events>({ allowDuplicateListeners: false, dedupe: 'throw' });
+
+// You can read the `allowDuplicateListeners` setting state, but it's not
+// recommended to modify it after the emitter has been instantiated (it's a
+// read-only property).
+emitterB.allowDuplicateListeners; // -> false
+
+// You can read and modify the `dedupe` setting freely. It's okay to
+// change it's value whenever you want.
+emitterB.dedupe; // -> "throw"
+emitterB.dedupe = 'ignore';
 ```
 
 **Methods**
 
-- [on( eventName, listener )](#emitter-on)
-- [once( eventName, listener, )](#emitter-once)
+- [on( eventName, listener, [listenerId] )](#emitter-on)
+- [once( eventName, listener, [listenerId] )](#emitter-once)
 - [off( [eventName], [target] )](#emitter-off)
 - [emit( eventName, [...args] )](#emitter-emit)
 - [listenerCount( [eventName] )](#emitter-listenerCount)
 
-<h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventName, listener )</code></h3>
+<h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventName, listener, [listenerId] )</code></h3>
 
-Add a listener to an event. You can add the same listener multiple times.
+Add a listener to an event.
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
-  - The event specified as a string, number or symbol.
+- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+  - The event name specified as a string, number or symbol.
 - **listener** &nbsp;&mdash;&nbsp; _Function_
   - A listener function that will be called when the event is emitted.
+- **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+  - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _Symbol_
+**Returns** &nbsp;&mdash;&nbsp; _symbol_
 
 A listener id, which can be used to remove this specific listener.
 
@@ -176,10 +227,18 @@ const emitter = new Emitter();
 const a = () => console.log('a');
 const b = () => console.log('b');
 
+// Bind a and b listeners to "test" event. Here we don't provide the third
+// argument (listener id) so it is created automatically and returned by the
+// .on() method.
 const id1 = emitter.on('test', a);
 const id2 = emitter.on('test', b);
-const id3 = emitter.on('test', a);
-const id4 = emitter.on('test', b);
+
+// Here we bind a and b listeners agains to "test" event, but we provide the
+// listener id manually (can be a string, a number or a symbol).
+const id3 = emitter.on('test', a, 'foo');
+const id4 = emitter.on('test', b, 'bar');
+id3 === 'foo'; // => true
+id4 === 'bar'; // => true
 
 emitter.emit('test');
 // a
@@ -198,18 +257,20 @@ emitter.emit('test');
 // b
 ```
 
-<h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventName, listener )</code></h3>
+<h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventName, listener, [listenerId] )</code></h3>
 
-Add a one-off listener to an event. You can add the same listener multiple times.
+Add a one-off listener to an event.
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
-  - The event specified as a string, number or symbol.
+- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+  - The event name specified as a string, number or symbol.
 - **listener** &nbsp;&mdash;&nbsp; _Function_
   - A listener function that will be called when the event is emitted.
+- **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+  - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _Symbol_
+**Returns** &nbsp;&mdash;&nbsp; _symbol_
 
 A listener id, which can be used to remove this specific listener.
 
@@ -239,9 +300,9 @@ Remove an event listener or multiple event listeners. If no _target_ is provided
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_ &nbsp;&mdash;&nbsp; _optional_
-  - The event specified as a string, number or symbol.
-- **target** &nbsp;&mdash;&nbsp; _Function / Symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+  - The event name specified as a string, number or symbol.
+- **target** &nbsp;&mdash;&nbsp; _Function | string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
   - The event listener or listener id, which needs to be removed. If no _target_ is provided all listeners for the specified event will be removed.
 
 **Examples**
@@ -278,8 +339,8 @@ Emit events.
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
-  - The event specified as a string, number or symbol.
+- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+  - The event name specified as a string, number or symbol.
 - **...args** &nbsp;&mdash;&nbsp; _any_ &nbsp;&mdash;&nbsp; _optional_
   - The arguments which will be provided to the listeners when called.
 
@@ -303,8 +364,8 @@ Returns the listener count for an event if _eventName_ is provided. Otherwise re
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _String / Number / Symbol_
-  - The event specified as a string, number or symbol.
+- **eventName** &nbsp;&mdash;&nbsp; _string / number / symbol_
+  - The event name specified as a string, number or symbol.
 
 **Examples**
 
