@@ -69,7 +69,7 @@ emitter.off('a', a);
 emitter.off('b', b);
 ```
 
-<h3><a id="usage-duplicate-listeners" href="#usage-duplicate-listeners" aria-hidden="true">#</a> Preventing duplicate listener</h3>
+<h3><a id="usage-duplicate-listeners" href="#usage-duplicate-listeners" aria-hidden="true">#</a> Preventing duplicate listeners</h3>
 
 Eventti's `Emitter` allows duplicate listeners by default (as do most event emitter implementations), but sometimes it's preferable to disallow duplicate event listeners.
 
@@ -90,20 +90,20 @@ A useful extra feature of Eventti is that `.on()` and `.once()` methods return a
 ```typescript
 import { Emitter } from 'eventti';
 
-const emitter1 = new Emitter();
+const emitter = new Emitter();
 
 // When you bind a listener a unique listener id (symbol) is automatically
 // created and returned.
-const a1 = emitter1.on('a', listener);
-const a2 = emitter1.once('a', listener);
-emitter1.off('a', a1);
-emitter1.off('a', a2);
+const a1 = emitter.on('a', listener);
+const a2 = emitter.once('a', listener);
+emitter.off('a', a1);
+emitter.off('a', a2);
 
 // You can also provide the id manually via a third argument.
-emitter1.on('a', listener, 'foo');
-emitter1.on('a', listener, 'bar');
-emitter1.off('a', 'foo');
-emitter1.off('a', 'bar');
+emitter.on('a', listener, 'foo');
+emitter.on('a', listener, 'bar');
+emitter.off('a', 'foo');
+emitter.off('a', 'bar');
 
 // The listener id is unique and there can only be one listener attached to
 // an id at given time. So what should happen when you try to add the same
@@ -113,32 +113,32 @@ emitter1.off('a', 'bar');
 // Case #1: When the dedupe mode is set to "add" (which it is by default) the
 // existing listener will be first completely removed and then the new listener
 // will be added in the end of the listener queue.
-const emitter2 = new Emitter({ dedupe: 'add' });
-emitter2.on('a', () => console.log('foo 1'), 'foo');
-emitter2.on('a', () => console.log('bar'), 'bar');
-emitter2.on('a', () => console.log('foo 2'), 'foo');
-emitter2.emit('a');
+const emitter1 = new Emitter({ dedupe: 'add' });
+emitter1.on('a', () => console.log('foo 1'), 'foo');
+emitter1.on('a', () => console.log('bar'), 'bar');
+emitter1.on('a', () => console.log('foo 2'), 'foo');
+emitter1.emit('a');
 // -> bar
 // -> foo 2
 
 // Case #2: When the dedupe mode is set to "replace" the existing listener will
 // be replaced by the new listener while keeping the listener at the same index
 // in the listener queue.
-const emitter3 = new Emitter({ dedupe: 'replace' });
-emitter3.on('a', () => console.log('foo 1'), 'foo');
-emitter3.on('a', () => console.log('bar'), 'bar');
-emitter3.on('a', () => console.log('foo 2'), 'foo');
-emitter3.emit('a');
+const emitter2 = new Emitter({ dedupe: 'replace' });
+emitter2.on('a', () => console.log('foo 1'), 'foo');
+emitter2.on('a', () => console.log('bar'), 'bar');
+emitter2.on('a', () => console.log('foo 2'), 'foo');
+emitter2.emit('a');
 // -> foo 2
 // -> bar
 
 // Case #3: When the dedupe mode is set to "ignore" the new listener is simply
 // ignored.
-const emitter4 = new Emitter({ dedupe: 'ignore' });
-emitter4.on('a', () => console.log('foo 1'), 'foo');
-emitter4.on('a', () => console.log('bar'), 'bar');
-emitter4.on('a', () => console.log('foo 2'), 'foo');
-emitter4.emit('a');
+const emitter3 = new Emitter({ dedupe: 'ignore' });
+emitter3.on('a', () => console.log('foo 1'), 'foo');
+emitter3.on('a', () => console.log('bar'), 'bar');
+emitter3.on('a', () => console.log('foo 2'), 'foo');
+emitter3.emit('a');
 // -> foo 1
 // -> bar
 
@@ -147,6 +147,11 @@ const emitter4 = new Emitter({ dedupe: 'ignore' });
 emitter4.on('a', () => console.log('foo 1'), 'foo');
 emitter4.on('a', () => console.log('bar'), 'bar');
 emitter4.on('a', () => console.log('foo 2'), 'foo'); // throws an error
+
+// Bonus tip: you can change the dedupe mode at any point after instantiaiting
+// the emitter. Just directly set the mode via emitter's dedupe property.
+const emitter5 = new Emitter();
+emitter5.dedupe = 'throw';
 ```
 
 <h2><a id="api" href="#api" aria-hidden="true">#</a> Emitter API</h2>
