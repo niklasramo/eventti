@@ -31,6 +31,4 @@ declare class Emitter<T extends Events> {
     listenerCount<EventName extends keyof T>(eventName?: EventName): number;
 }
 
-declare function emitBatch<T extends Events, S extends keyof T>(emitter: Emitter<T>, eventNames: [S, ...(keyof T)[]], ...args: Parameters<T[S]>): void;
-
-export { Emitter, EmitterOptions, EventListener, EventListenerId, EventListenerIdDedupeMode, EventName, Events, emitBatch };
+export { Emitter, EmitterOptions, EventListener, EventListenerId, EventListenerIdDedupeMode, EventName, Events };
