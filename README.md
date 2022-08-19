@@ -90,19 +90,17 @@ A useful extra feature of Eventti is that `.on()` and `.once()` methods return a
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
+const listener = () => {};
 
-// When you bind a listener a unique listener id (symbol) is automatically
-// created and returned.
+// When you add a listener a unique id is automatically created and returned,
+// which you use to remove the specific listener.
 const a1 = emitter.on('a', listener);
-const a2 = emitter.once('a', listener);
 emitter.off('a', a1);
-emitter.off('a', a2);
 
 // You can also provide the id manually via a third argument.
-emitter.on('a', listener, 'foo');
-emitter.on('a', listener, 'bar');
+const a2 = emitter.on('a', listener, 'foo');
+a2 === 'foo'; // -> true
 emitter.off('a', 'foo');
-emitter.off('a', 'bar');
 
 // The listener id is unique and there can only be one listener attached to
 // an id at given time. So what should happen when you try to add the same
@@ -111,7 +109,7 @@ emitter.off('a', 'bar');
 
 // Case #1: When the idDedupeMode mode is set to "replace" (which it is by
 // default) the existing listener will be first completely removed and then the
-// new listener will be added in the end of the listener queue.
+// new listener will be added at the end of the listener queue.
 const emitter1 = new Emitter({ idDedupeMode: 'replace' });
 emitter1.on('a', () => console.log('foo 1'), 'foo');
 emitter1.on('a', () => console.log('bar'), 'bar');
@@ -218,9 +216,9 @@ Add a listener to an event.
 - **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
   - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _symbol_
+**Returns** &nbsp;&mdash;&nbsp; _string | number | symbol_
 
-A listener id, which can be used to remove this specific listener.
+A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
 
 **Examples**
 
@@ -275,9 +273,9 @@ Add a one-off listener to an event.
 - **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
   - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _symbol_
+**Returns** &nbsp;&mdash;&nbsp; _string | number | symbol_
 
-A listener id, which can be used to remove this specific listener.
+A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
 
 **Examples**
 
