@@ -1,6 +1,21 @@
-import { EventName, EventListener, EventListenerId, Events } from './types';
+export type EventName = string | number | symbol;
 
-function getOrCreateEventData(events: Map<EventName, EventData>, eventName: EventName) {
+export type EventListener = (...data: any) => any;
+
+export type EventListenerId = string | number | symbol;
+
+export type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
+
+export type Events = Record<EventName, EventListener>;
+
+export type EmitterOptions = {
+  allowDuplicateListeners?: boolean;
+  idDedupeMode?: EventListenerIdDedupeMode;
+};
+
+type InternalEventMap = Map<EventName, EventData>;
+
+function getOrCreateEventData(events: InternalEventMap, eventName: EventName) {
   let eventData = events.get(eventName);
   if (!eventData) {
     eventData = new EventData();
@@ -22,19 +37,39 @@ class EventData {
     this.emitList = null;
   }
 
-  add(listener: EventListener, once?: boolean): EventListenerId {
-    // Get existing listener ids for the listener.
-    let listenerIds = this.fnMap.get(listener);
+  add(
+    listener: EventListener,
+    once: boolean,
+    listenerId: EventListenerId,
+    idDedupeMode: EventListenerIdDedupeMode,
+    allowDuplicateListeners: boolean
+  ): EventListenerId {
+    // Handle duplicate listeners.
+    if (!allowDuplicateListeners && this.fnMap.has(listener)) {
+      throw new Error('Emitter: tried to add an existing event listener to an event!');
+    }
 
-    // Create listener id list if needed.
+    // Handle duplicate ids.
+    if (this.idMap.has(listenerId)) {
+      switch (idDedupeMode) {
+        case 'throw': {
+          throw new Error('Emitter: tried to add an existing event listener id to an event!');
+        }
+        case 'ignore': {
+          return listenerId;
+        }
+        default: {
+          this.delId(listenerId, idDedupeMode === 'update');
+        }
+      }
+    }
+
+    // Get existing listener ids for the listener (create if non-existent).
+    let listenerIds = this.fnMap.get(listener);
     if (!listenerIds) {
       listenerIds = new Set();
       this.fnMap.set(listener, listenerIds);
     }
-
-    // Create unique listener id. A symbol is optimal for this case since
-    // it's always unique.
-    const listenerId = Symbol();
 
     // Store listener and listener id.
     listenerIds.add(listenerId);
@@ -55,14 +90,18 @@ class EventData {
     return listenerId;
   }
 
-  delId(listenerId: EventListenerId) {
-    if (!this.idMap.has(listenerId)) return;
+  delId(listenerId: EventListenerId, ignoreIdMap = false) {
+    const listener = this.idMap.get(listenerId);
+    if (!listener) return;
 
-    const listener = this.idMap.get(listenerId) as EventListener;
     const listenerIds = this.fnMap.get(listener) as Set<EventListenerId>;
 
+    if (!ignoreIdMap) {
+      this.idMap.delete(listenerId);
+    }
+
     this.onceList.delete(listenerId);
-    this.idMap.delete(listenerId);
+
     listenerIds.delete(listenerId);
 
     if (!listenerIds.size) {
@@ -87,9 +126,14 @@ class EventData {
 }
 
 export class Emitter<T extends Events> {
-  protected _events: Map<EventName, EventData>;
+  idDedupeMode: EventListenerIdDedupeMode;
+  readonly allowDuplicateListeners: boolean;
+  protected _events: InternalEventMap;
 
-  constructor() {
+  constructor(options: EmitterOptions = {}) {
+    const { idDedupeMode = 'replace', allowDuplicateListeners = true } = options;
+    this.idDedupeMode = idDedupeMode;
+    this.allowDuplicateListeners = allowDuplicateListeners;
     this._events = new Map();
   }
 
@@ -132,12 +176,32 @@ export class Emitter<T extends Events> {
     return listeners;
   }
 
-  on<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId {
-    return getOrCreateEventData(this._events, eventName).add(listener);
+  on<EventName extends keyof T>(
+    eventName: EventName,
+    listener: T[EventName],
+    listenerId: EventListenerId = Symbol()
+  ): EventListenerId {
+    return getOrCreateEventData(this._events, eventName).add(
+      listener,
+      false,
+      listenerId,
+      this.idDedupeMode,
+      this.allowDuplicateListeners
+    );
   }
 
-  once<EventName extends keyof T>(eventName: EventName, listener: T[EventName]): EventListenerId {
-    return getOrCreateEventData(this._events, eventName).add(listener, true);
+  once<EventName extends keyof T>(
+    eventName: EventName,
+    listener: T[EventName],
+    listenerId: EventListenerId = Symbol()
+  ): EventListenerId {
+    return getOrCreateEventData(this._events, eventName).add(
+      listener,
+      true,
+      listenerId,
+      this.idDedupeMode,
+      this.allowDuplicateListeners
+    );
   }
 
   off<EventName extends keyof T>(
@@ -150,7 +214,8 @@ export class Emitter<T extends Events> {
       return;
     }
 
-    // If listener is undefined, let's remove all listeners from the name.
+    // If listener is undefined, let's remove all listeners linked to the
+    // event name.
     if (listener === undefined) {
       this._events.delete(eventName);
       return;
@@ -190,14 +255,14 @@ export class Emitter<T extends Events> {
     }
   }
 
-  listenerCount<EventName extends keyof T>(eventName?: EventName): void | number {
+  listenerCount<EventName extends keyof T>(eventName?: EventName): number {
     if (eventName === undefined) {
       let count = 0;
       this._events.forEach((_value, key) => {
-        count += this.listenerCount(key) || 0;
+        count += this.listenerCount(key);
       });
       return count;
     }
-    return this._events.get(eventName)?.idMap.size;
+    return this._events.get(eventName)?.idMap.size || 0;
   }
 }

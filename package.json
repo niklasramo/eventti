@@ -1,7 +1,7 @@
 {
   "name": "eventti",
-  "version": "2.0.1",
-  "description": "A fast, small and reliable event emitter.",
+  "version": "3.0.0",
+  "description": "Tiny and fast multi-purpose event emitter for Node.js and browser wrapped in a simple API.",
   "keywords": [
     "event",
     "events",
@@ -25,7 +25,7 @@
   "main": "./dist/eventti.js",
   "umd:main": "./dist/eventti.umd.js",
   "module": "./dist/eventti.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/eventti.d.ts",
   "files": [
     "src",
     "dist",
@@ -33,31 +33,38 @@
     "README.md",
     "LICENSE.md"
   ],
-  "ava": {
-    "files": [
-      "test/**/*"
-    ]
-  },
   "scripts": {
-    "test": "npm run ts-check-usage && ava",
-    "build": "del ./dist && npm run ts-check-source && npm run format && npm run ts-build-types && npm run bundle && npm run minify && npm run size",
+    "test": "npm run ts-check && npm run test-node && npm run test-browser",
+    "test-browser": "$(npm bin)/karma start karma.conf.cjs",
+    "test-node": "$(npm bin)/mocha tests/dist/tests.node.js",
+    "build": "npm run del-dist && npm run ts-check && npm run format && npm run bundle && npm run minify && npm run size",
     "bundle": "$(npm bin)/rollup -c",
-    "ts-build-types": "$(npm bin)/tsc --emitDeclarationOnly --declaration --declarationDir ./dist/types",
-    "ts-check-source": "$(npm bin)/tsc --noEmit",
-    "ts-check-usage": "$(npm bin)/tsc ./test/types.ts --noEmit --lib ESNext",
-    "format": "$(npm bin)/prettier --write ./src/**/*.ts",
-    "validate": "$(npm bin)/prettier --list-different ./src/**/*.ts",
+    "ts-check": "$(npm bin)/tsc --noEmit",
+    "del-dist": "del ./dist && del ./tests/dist",
+    "format": "npm run format-source && npm run format-tests",
+    "format-source": "$(npm bin)/prettier --write ./src/",
+    "format-tests": "$(npm bin)/prettier --write ./tests/src/",
+    "validate": "$(npm bin)/prettier --list-different ./src/",
     "size": "for file in ./dist/*.js; do echo $file && $(npm bin)/gzip-size $file --include-original; done",
     "minify": "for file in ./dist/*.js; do $(npm bin)/terser $file -o $file --compress --mangle --comments false; done"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "8.3.2",
-    "ava": "4.2.0",
-    "del-cli": "4.0.1",
+    "@rollup/plugin-typescript": "8.3.4",
+    "@types/chai": "4.3.3",
+    "@types/mocha": "9.1.1",
+    "chai": "4.3.6",
+    "del-cli": "5.0.0",
+    "dotenv": "16.0.1",
     "gzip-size-cli": "5.1.0",
-    "prettier": "2.6.2",
-    "rollup": "2.75.1",
-    "terser": "5.13.1",
-    "typescript": "4.7.2"
+    "karma": "6.4.0",
+    "karma-browserstack-launcher": "1.6.0",
+    "karma-mocha": "2.0.1",
+    "karma-mocha-reporter": "2.2.5",
+    "mocha": "10.0.0",
+    "prettier": "2.7.1",
+    "rollup": "2.78.1",
+    "rollup-plugin-dts": "4.2.2",
+    "terser": "5.14.2",
+    "typescript": "4.7.4"
   }
 }
