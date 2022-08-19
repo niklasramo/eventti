@@ -4,7 +4,7 @@ Tiny and fast multi-purpose event emitter for Node.js and browser wrapped in a s
 
 By default Eventti allows adding duplicate listeners to an event, but you can configure the Emitter to throw an error when a duplicate event listener is added. Additionally, Eventti assigns unique ids to all event listeners which allows you to granularly remove specific listeners (when there are duplicate listeners) and also update/replace existing listeners in the emitter.
 
-Regarding performance, one common issue in most event emitter implementations is that they _always_ clone the listener queue on emit. Although the cloning _is_ required for correct functionality we can speed things up by cloning the listener queue _only when necessary_, which is what Eventti does internally.
+Regarding performance, Eventti is fine-tuned to be as fast as possible with the feature set it provides. If there is room for optimization then we shall optimize ;) Please do open a ticket if you have performance optimization suggestions.
 
 - The classic event emitter API with useful extras.
 - Small footprint (under 1kb gzipped).
