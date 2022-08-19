@@ -4,13 +4,13 @@ export type EventListener = (...data: any) => any;
 
 export type EventListenerId = string | number | symbol;
 
-export type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'add' | 'replace';
+export type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
 
 export type Events = Record<EventName, EventListener>;
 
 export type EmitterOptions = {
   allowDuplicateListeners?: boolean;
-  dedupe?: EventListenerIdDedupeMode;
+  idDedupeMode?: EventListenerIdDedupeMode;
 };
 
 type InternalEventMap = Map<EventName, EventData>;
@@ -41,7 +41,7 @@ class EventData {
     listener: EventListener,
     once: boolean,
     listenerId: EventListenerId,
-    dedupe: EventListenerIdDedupeMode,
+    idDedupeMode: EventListenerIdDedupeMode,
     allowDuplicateListeners: boolean
   ): EventListenerId {
     // Handle duplicate listeners.
@@ -51,7 +51,7 @@ class EventData {
 
     // Handle duplicate ids.
     if (this.idMap.has(listenerId)) {
-      switch (dedupe) {
+      switch (idDedupeMode) {
         case 'throw': {
           throw new Error('Emitter: tried to add an existing event listener id to an event!');
         }
@@ -59,7 +59,7 @@ class EventData {
           return listenerId;
         }
         default: {
-          this.delId(listenerId, dedupe === 'replace');
+          this.delId(listenerId, idDedupeMode === 'update');
         }
       }
     }
@@ -126,13 +126,13 @@ class EventData {
 }
 
 export class Emitter<T extends Events> {
-  dedupe: EventListenerIdDedupeMode;
+  idDedupeMode: EventListenerIdDedupeMode;
   readonly allowDuplicateListeners: boolean;
   protected _events: InternalEventMap;
 
   constructor(options: EmitterOptions = {}) {
-    const { dedupe = 'add', allowDuplicateListeners = true } = options;
-    this.dedupe = dedupe;
+    const { idDedupeMode = 'replace', allowDuplicateListeners = true } = options;
+    this.idDedupeMode = idDedupeMode;
     this.allowDuplicateListeners = allowDuplicateListeners;
     this._events = new Map();
   }
@@ -185,7 +185,7 @@ export class Emitter<T extends Events> {
       listener,
       false,
       listenerId,
-      this.dedupe,
+      this.idDedupeMode,
       this.allowDuplicateListeners
     );
   }
@@ -199,7 +199,7 @@ export class Emitter<T extends Events> {
       listener,
       true,
       listenerId,
-      this.dedupe,
+      this.idDedupeMode,
       this.allowDuplicateListeners
     );
   }

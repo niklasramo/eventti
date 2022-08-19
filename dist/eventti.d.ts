@@ -1,11 +1,11 @@
-export declare type EventName = string | number | symbol;
-export declare type EventListener = (...data: any) => any;
-export declare type EventListenerId = string | number | symbol;
-export declare type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'add' | 'replace';
-export declare type Events = Record<EventName, EventListener>;
-export declare type EmitterOptions = {
+declare type EventName = string | number | symbol;
+declare type EventListener = (...data: any) => any;
+declare type EventListenerId = string | number | symbol;
+declare type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
+declare type Events = Record<EventName, EventListener>;
+declare type EmitterOptions = {
     allowDuplicateListeners?: boolean;
-    dedupe?: EventListenerIdDedupeMode;
+    idDedupeMode?: EventListenerIdDedupeMode;
 };
 declare type InternalEventMap = Map<EventName, EventData>;
 declare class EventData {
@@ -14,12 +14,12 @@ declare class EventData {
     onceList: Set<EventListenerId>;
     emitList: EventListener[] | null;
     constructor();
-    add(listener: EventListener, once: boolean, listenerId: EventListenerId, dedupe: EventListenerIdDedupeMode, allowDuplicateListeners: boolean): EventListenerId;
+    add(listener: EventListener, once: boolean, listenerId: EventListenerId, idDedupeMode: EventListenerIdDedupeMode, allowDuplicateListeners: boolean): EventListenerId;
     delId(listenerId: EventListenerId, ignoreIdMap?: boolean): void;
     delFn(listener: EventListener): void;
 }
-export declare class Emitter<T extends Events> {
-    dedupe: EventListenerIdDedupeMode;
+declare class Emitter<T extends Events> {
+    idDedupeMode: EventListenerIdDedupeMode;
     readonly allowDuplicateListeners: boolean;
     protected _events: InternalEventMap;
     constructor(options?: EmitterOptions);
@@ -30,4 +30,7 @@ export declare class Emitter<T extends Events> {
     emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void;
     listenerCount<EventName extends keyof T>(eventName?: EventName): number;
 }
-export {};
+
+declare function emitBatch<T extends Events, S extends keyof T>(emitter: Emitter<T>, eventNames: [S, ...(keyof T)[]], ...args: Parameters<T[S]>): void;
+
+export { Emitter, EmitterOptions, EventListener, EventListenerId, EventListenerIdDedupeMode, EventName, Events, emitBatch };
