@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 jobs:
   run-tests:
-    name: Run tests
     uses: ./.github/workflows/run-tests.yml
     secrets:
       BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
