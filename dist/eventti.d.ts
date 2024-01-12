@@ -1,13 +1,13 @@
-declare type EventName = string | number | symbol;
-declare type EventListener = (...data: any) => any;
-declare type EventListenerId = string | number | symbol;
-declare type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
-declare type Events = Record<EventName, EventListener>;
-declare type EmitterOptions = {
+type EventName = string | number | symbol;
+type EventListener = (...data: any) => any;
+type EventListenerId = string | number | symbol;
+type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
+type Events = Record<EventName, EventListener>;
+type EmitterOptions = {
     allowDuplicateListeners?: boolean;
     idDedupeMode?: EventListenerIdDedupeMode;
 };
-declare type InternalEventMap = Map<EventName, EventData>;
+type InternalEventMap = Map<EventName, EventData>;
 declare class EventData {
     idMap: Map<EventListenerId, EventListener>;
     fnMap: Map<EventListener, Set<EventListenerId>>;
@@ -31,4 +31,4 @@ declare class Emitter<T extends Events> {
     listenerCount<EventName extends keyof T>(eventName?: EventName): number;
 }
 
-export { Emitter, EmitterOptions, EventListener, EventListenerId, EventListenerIdDedupeMode, EventName, Events };
+export { Emitter, type EmitterOptions, type EventListener, type EventListenerId, type EventListenerIdDedupeMode, type EventName, type Events };

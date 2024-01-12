@@ -1,6 +1,6 @@
 {
   "name": "eventti",
-  "version": "3.0.0",
+  "version": "4.0.0-alpha",
   "description": "Tiny and fast multi-purpose event emitter for Node.js and browser wrapped in a simple API.",
   "keywords": [
     "event",
@@ -26,6 +26,12 @@
   "umd:main": "./dist/eventti.umd.js",
   "module": "./dist/eventti.js",
   "types": "./dist/eventti.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/eventti.js",
+      "require": "./dist/eventti.cjs"
+    }
+  },
   "files": [
     "src",
     "dist",
@@ -35,36 +41,36 @@
   ],
   "scripts": {
     "test": "npm run ts-check && npm run test-node && npm run test-browser",
-    "test-browser": "$(npm bin)/karma start karma.conf.cjs",
-    "test-node": "$(npm bin)/mocha tests/dist/tests.node.js",
+    "test-browser": "karma start karma.conf.cjs",
+    "test-node": "mocha tests/dist/tests.node.js",
     "build": "npm run del-dist && npm run ts-check && npm run format && npm run bundle && npm run minify && npm run size",
-    "bundle": "$(npm bin)/rollup -c",
-    "ts-check": "$(npm bin)/tsc --noEmit",
+    "bundle": "rollup -c",
+    "ts-check": "tsc --noEmit",
     "del-dist": "del ./dist && del ./tests/dist",
     "format": "npm run format-source && npm run format-tests",
-    "format-source": "$(npm bin)/prettier --write ./src/",
-    "format-tests": "$(npm bin)/prettier --write ./tests/src/",
-    "validate": "$(npm bin)/prettier --list-different ./src/",
-    "size": "for file in ./dist/*.js; do echo $file && $(npm bin)/gzip-size $file --include-original; done",
-    "minify": "for file in ./dist/*.js; do $(npm bin)/terser $file -o $file --compress --mangle --comments false; done"
+    "format-source": "prettier --write ./src/",
+    "format-tests": "prettier --write ./tests/src/",
+    "format-check": "prettier --list-different ./src/",
+    "size": "for file in ./dist/*.js; do echo $file && gzip-size $file --include-original; done",
+    "minify": "for file in ./dist/*.js; do terser $file -o $file --compress --mangle --comments false; done"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "8.3.4",
-    "@types/chai": "4.3.3",
-    "@types/mocha": "9.1.1",
-    "chai": "4.3.6",
-    "del-cli": "5.0.0",
-    "dotenv": "16.0.1",
+    "@rollup/plugin-typescript": "11.1.6",
+    "@types/chai": "4.3.11",
+    "@types/mocha": "10.0.6",
+    "chai": "4.4.1",
+    "del-cli": "5.1.0",
+    "dotenv": "16.3.1",
     "gzip-size-cli": "5.1.0",
-    "karma": "6.4.0",
+    "karma": "6.4.2",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",
     "karma-mocha-reporter": "2.2.5",
-    "mocha": "10.0.0",
-    "prettier": "2.7.1",
-    "rollup": "2.78.1",
-    "rollup-plugin-dts": "4.2.2",
-    "terser": "5.14.2",
-    "typescript": "4.7.4"
+    "mocha": "10.2.0",
+    "prettier": "3.2.0",
+    "rollup": "4.9.5",
+    "rollup-plugin-dts": "6.1.0",
+    "terser": "5.26.0",
+    "typescript": "5.3.3"
   }
 }

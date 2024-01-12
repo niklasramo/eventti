@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { Emitter } from '../../src/index';
+import { Emitter } from '../../src/index.js';
 
 describe('eventName', () => {
   it(`should be allowed to be a string, number or symbol in all methods`, () => {

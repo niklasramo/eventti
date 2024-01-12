@@ -1,16 +1,19 @@
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
-import pkg from './package.json';
+import pkg from './package.json' assert { type: 'json' };
 
-module.exports = [
+export default [
   // Build library.
   {
     input: pkg.source,
     output: [
       {
-        name: pkg.name,
-        file: pkg.main,
+        file: pkg.exports['.'].import,
         format: 'es',
+      },
+      {
+        file: pkg.exports['.'].require,
+        format: 'cjs',
       },
       {
         name: pkg.name,

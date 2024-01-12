@@ -42,7 +42,7 @@ class EventData {
     once: boolean,
     listenerId: EventListenerId,
     idDedupeMode: EventListenerIdDedupeMode,
-    allowDuplicateListeners: boolean
+    allowDuplicateListeners: boolean,
   ): EventListenerId {
     // Handle duplicate listeners.
     if (!allowDuplicateListeners && this.fnMap.has(listener)) {
@@ -179,34 +179,34 @@ export class Emitter<T extends Events> {
   on<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = Symbol()
+    listenerId: EventListenerId = Symbol(),
   ): EventListenerId {
     return getOrCreateEventData(this._events, eventName).add(
       listener,
       false,
       listenerId,
       this.idDedupeMode,
-      this.allowDuplicateListeners
+      this.allowDuplicateListeners,
     );
   }
 
   once<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = Symbol()
+    listenerId: EventListenerId = Symbol(),
   ): EventListenerId {
     return getOrCreateEventData(this._events, eventName).add(
       listener,
       true,
       listenerId,
       this.idDedupeMode,
-      this.allowDuplicateListeners
+      this.allowDuplicateListeners,
     );
   }
 
   off<EventName extends keyof T>(
     eventName?: EventName,
-    listener?: T[EventName] | EventListenerId
+    listener?: T[EventName] | EventListenerId,
   ): void {
     // If name is undefined, let's remove all listeners from the emitter.
     if (eventName === undefined) {
