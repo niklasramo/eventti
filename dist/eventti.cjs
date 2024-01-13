@@ -1,5 +1,11 @@
 'use strict';
 
+const EventListenerIdDedupeMode = {
+    APPEND: 'append',
+    UPDATE: 'update',
+    IGNORE: 'ignore',
+    THROW: 'throw',
+};
 function getOrCreateEventData(events, eventName) {
     let eventData = events.get(eventName);
     if (!eventData) {
@@ -23,14 +29,14 @@ class EventData {
         // Handle duplicate ids.
         if (this.idMap.has(listenerId)) {
             switch (idDedupeMode) {
-                case 'throw': {
+                case EventListenerIdDedupeMode.THROW: {
                     throw new Error('Emitter: tried to add an existing event listener id to an event!');
                 }
-                case 'ignore': {
+                case EventListenerIdDedupeMode.IGNORE: {
                     return listenerId;
                 }
                 default: {
-                    this.delId(listenerId, idDedupeMode === 'update');
+                    this.delId(listenerId, idDedupeMode === EventListenerIdDedupeMode.UPDATE);
                 }
             }
         }
@@ -84,7 +90,7 @@ class EventData {
 }
 class Emitter {
     constructor(options = {}) {
-        const { idDedupeMode = 'replace', allowDuplicateListeners = true } = options;
+        const { idDedupeMode = EventListenerIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
         this.idDedupeMode = idDedupeMode;
         this.allowDuplicateListeners = allowDuplicateListeners;
         this._events = new Map();
@@ -186,3 +192,4 @@ class Emitter {
 }
 
 exports.Emitter = Emitter;
+exports.EventListenerIdDedupeMode = EventListenerIdDedupeMode;

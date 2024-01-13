@@ -75,7 +75,7 @@ Eventti's `Emitter` allows duplicate listeners by default (as do most event emit
 ```typescript
 import { Emitter } from 'eventti';
 
-const emitter = new Emitter({ allowDuplicateListener: false });
+const emitter = new Emitter({ allowDuplicateListeners: false });
 const listener = () => {};
 
 emitter.on('a', listener);
@@ -107,10 +107,10 @@ emitter.off('a', 'foo');
 // listener id again? Well, it's up to you and Eventti allows you to choose from
 // four different options what the behaviour should be.
 
-// Case #1: When the idDedupeMode mode is set to "replace" (which it is by
-// default) the existing listener will be first completely removed and then the
-// new listener will be added at the end of the listener queue.
-const emitter1 = new Emitter({ idDedupeMode: 'replace' });
+// Case #1: When the idDedupeMode mode is set to "append" (which it is by
+// default) the existing listener (matching the id) will be first completely
+// removed and then the new listener will be appended to the listener queue.
+const emitter1 = new Emitter({ idDedupeMode: 'append' });
 emitter1.on('a', () => console.log('foo 1'), 'foo');
 emitter1.on('a', () => console.log('bar'), 'bar');
 emitter1.on('a', () => console.log('foo 2'), 'foo');
@@ -119,8 +119,8 @@ emitter1.emit('a');
 // -> foo 2
 
 // Case #2: When the idDedupeMode mode is set to "update" the existing listener
-// will be updated by the new listener while keeping the listener at the same
-// index in the listener queue.
+// (matching the id) will be replaced with new listener while keeping the
+// listener at the same index in the listener queue.
 const emitter2 = new Emitter({ idDedupeMode: 'update' });
 emitter2.on('a', () => console.log('foo 1'), 'foo');
 emitter2.on('a', () => console.log('bar'), 'bar');
@@ -159,13 +159,13 @@ emitter5.idDedupeMode = 'throw';
 - **allowDuplicateListeners** &nbsp;&mdash;&nbsp; _boolean_
   - When set to `false` `.on()` or `.once()` methods will throw an error if a duplicate event listener is added.
   - Optional. Defaults to `true` if omitted.
-- **idDedupeMode** &nbsp;&mdash;&nbsp; _"ignore" | "throw" | "replace" | "update"_
-  - Defines how a duplicate event listener id is handled when you provide it manually via `.on()` or `.once()` method.
+- **idDedupeMode** &nbsp;&mdash;&nbsp; _"append" | "update" | "ignore" | "throw"_
+  - Defines how a duplicate event listener id is handled.
+    - `"append"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
+    - `"update"`: the existing listener (of the id) is replaced with the new listener without changing the index of the listener in the event's listener queue.
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
-    - `"replace"`: the existing listener id is removed fully before the new listener is added to the event (at the end of the listener queue).
-    - `"update"`: the existing listener of the listener id is replaced with the new listener without changing the index of the listener id.
-  - Optional. Defaults to `"replace"` if omitted.
+  - Optional. Defaults to `"append"` if omitted.
 
 ```typescript
 import { Emitter } from 'eventti';

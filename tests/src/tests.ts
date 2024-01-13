@@ -64,7 +64,7 @@ describe('emitter.on()', () => {
   describe('emitter.on(eventName, listener, listenerId)', () => {
     it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
       ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        (['ignore', 'replace', 'update', 'throw'] as const).forEach((idDedupeMode) => {
+        (['ignore', 'append', 'update', 'throw'] as const).forEach((idDedupeMode) => {
           const emitter = new Emitter({ idDedupeMode });
           let count = 0;
           const listener = () => {
@@ -109,8 +109,8 @@ describe('emitter.on()', () => {
       assert.throws(() => emitter.on('test', () => {}, 'foo'));
     });
 
-    it('should remove the existing listener id and add the new listener id to the end of the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "replace"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'replace' });
+    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
+      const emitter = new Emitter({ idDedupeMode: 'append' });
       let result = '';
       emitter.on('test', () => void (result += '1'), 'foo');
       emitter.on('test', () => void (result += '2'));
@@ -119,7 +119,7 @@ describe('emitter.on()', () => {
       assert.equal(result, '23');
     });
 
-    it('should replace (in place) the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
+    it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
       const emitter = new Emitter({ idDedupeMode: 'update' });
       let result = '';
       emitter.on('test', () => void (result += '1'), 'foo');
@@ -193,7 +193,7 @@ describe('emitter.once()', () => {
   describe('emitter.once(eventName, listener, listenerId)', () => {
     it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
       ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        (['ignore', 'replace', 'update', 'throw'] as const).forEach((idDedupeMode) => {
+        (['ignore', 'append', 'update', 'throw'] as const).forEach((idDedupeMode) => {
           const emitter = new Emitter({ idDedupeMode });
           let count = 0;
           const listener = () => {
@@ -234,8 +234,8 @@ describe('emitter.once()', () => {
       assert.throws(() => emitter.once('test', () => {}, 'foo'));
     });
 
-    it('should remove the existing listener id and add the new listener id to the end of the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "replace"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'replace' });
+    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
+      const emitter = new Emitter({ idDedupeMode: 'append' });
       let result = '';
       emitter.once('test', () => void (result += '1'), 'foo');
       emitter.once('test', () => void (result += '2'));
@@ -244,7 +244,7 @@ describe('emitter.once()', () => {
       assert.equal(result, '23');
     });
 
-    it('should replace (in place) the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
+    it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
       const emitter = new Emitter({ idDedupeMode: 'update' });
       let result = '';
       emitter.once('test', () => void (result += '1'), 'foo');

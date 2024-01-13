@@ -4,6 +4,12 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.chai));
 })(this, (function (chai) { 'use strict';
 
+    const EventListenerIdDedupeMode = {
+        APPEND: 'append',
+        UPDATE: 'update',
+        IGNORE: 'ignore',
+        THROW: 'throw',
+    };
     function getOrCreateEventData(events, eventName) {
         let eventData = events.get(eventName);
         if (!eventData) {
@@ -27,14 +33,14 @@
             // Handle duplicate ids.
             if (this.idMap.has(listenerId)) {
                 switch (idDedupeMode) {
-                    case 'throw': {
+                    case EventListenerIdDedupeMode.THROW: {
                         throw new Error('Emitter: tried to add an existing event listener id to an event!');
                     }
-                    case 'ignore': {
+                    case EventListenerIdDedupeMode.IGNORE: {
                         return listenerId;
                     }
                     default: {
-                        this.delId(listenerId, idDedupeMode === 'update');
+                        this.delId(listenerId, idDedupeMode === EventListenerIdDedupeMode.UPDATE);
                     }
                 }
             }
@@ -88,7 +94,7 @@
     }
     class Emitter {
         constructor(options = {}) {
-            const { idDedupeMode = 'replace', allowDuplicateListeners = true } = options;
+            const { idDedupeMode = EventListenerIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
             this.idDedupeMode = idDedupeMode;
             this.allowDuplicateListeners = allowDuplicateListeners;
             this._events = new Map();
@@ -244,7 +250,7 @@
         describe('emitter.on(eventName, listener, listenerId)', () => {
             it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
                 ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-                    ['ignore', 'replace', 'update', 'throw'].forEach((idDedupeMode) => {
+                    ['ignore', 'append', 'update', 'throw'].forEach((idDedupeMode) => {
                         const emitter = new Emitter({ idDedupeMode });
                         let count = 0;
                         const listener = () => {
@@ -283,8 +289,8 @@
                 emitter.on('test', () => { }, 'foo');
                 chai.assert.throws(() => emitter.on('test', () => { }, 'foo'));
             });
-            it('should remove the existing listener id and add the new listener id to the end of the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "replace"', () => {
-                const emitter = new Emitter({ idDedupeMode: 'replace' });
+            it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
+                const emitter = new Emitter({ idDedupeMode: 'append' });
                 let result = '';
                 emitter.on('test', () => void (result += '1'), 'foo');
                 emitter.on('test', () => void (result += '2'));
@@ -292,7 +298,7 @@
                 emitter.emit('test');
                 chai.assert.equal(result, '23');
             });
-            it('should replace (in place) the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
+            it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
                 const emitter = new Emitter({ idDedupeMode: 'update' });
                 let result = '';
                 emitter.on('test', () => void (result += '1'), 'foo');
@@ -355,7 +361,7 @@
         describe('emitter.once(eventName, listener, listenerId)', () => {
             it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
                 ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-                    ['ignore', 'replace', 'update', 'throw'].forEach((idDedupeMode) => {
+                    ['ignore', 'append', 'update', 'throw'].forEach((idDedupeMode) => {
                         const emitter = new Emitter({ idDedupeMode });
                         let count = 0;
                         const listener = () => {
@@ -390,8 +396,8 @@
                 emitter.once('test', () => { }, 'foo');
                 chai.assert.throws(() => emitter.once('test', () => { }, 'foo'));
             });
-            it('should remove the existing listener id and add the new listener id to the end of the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "replace"', () => {
-                const emitter = new Emitter({ idDedupeMode: 'replace' });
+            it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
+                const emitter = new Emitter({ idDedupeMode: 'append' });
                 let result = '';
                 emitter.once('test', () => void (result += '1'), 'foo');
                 emitter.once('test', () => void (result += '2'));
@@ -399,7 +405,7 @@
                 emitter.emit('test');
                 chai.assert.equal(result, '23');
             });
-            it('should replace (in place) the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
+            it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
                 const emitter = new Emitter({ idDedupeMode: 'update' });
                 let result = '';
                 emitter.once('test', () => void (result += '1'), 'foo');

@@ -1,7 +1,13 @@
 type EventName = string | number | symbol;
 type EventListener = (...data: any) => any;
 type EventListenerId = string | number | symbol;
-type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
+declare const EventListenerIdDedupeMode: {
+    readonly APPEND: "append";
+    readonly UPDATE: "update";
+    readonly IGNORE: "ignore";
+    readonly THROW: "throw";
+};
+type EventListenerIdDedupeMode = (typeof EventListenerIdDedupeMode)[keyof typeof EventListenerIdDedupeMode];
 type Events = Record<EventName, EventListener>;
 type EmitterOptions = {
     allowDuplicateListeners?: boolean;
@@ -31,4 +37,4 @@ declare class Emitter<T extends Events> {
     listenerCount<EventName extends keyof T>(eventName?: EventName): number;
 }
 
-export { Emitter, type EmitterOptions, type EventListener, type EventListenerId, type EventListenerIdDedupeMode, type EventName, type Events };
+export { Emitter, type EmitterOptions, type EventListener, type EventListenerId, EventListenerIdDedupeMode, type EventName, type Events };

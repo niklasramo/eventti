@@ -4,7 +4,15 @@ export type EventListener = (...data: any) => any;
 
 export type EventListenerId = string | number | symbol;
 
-export type EventListenerIdDedupeMode = 'ignore' | 'throw' | 'replace' | 'update';
+export const EventListenerIdDedupeMode = {
+  APPEND: 'append',
+  UPDATE: 'update',
+  IGNORE: 'ignore',
+  THROW: 'throw',
+} as const;
+
+export type EventListenerIdDedupeMode =
+  (typeof EventListenerIdDedupeMode)[keyof typeof EventListenerIdDedupeMode];
 
 export type Events = Record<EventName, EventListener>;
 
@@ -52,14 +60,14 @@ class EventData {
     // Handle duplicate ids.
     if (this.idMap.has(listenerId)) {
       switch (idDedupeMode) {
-        case 'throw': {
+        case EventListenerIdDedupeMode.THROW: {
           throw new Error('Emitter: tried to add an existing event listener id to an event!');
         }
-        case 'ignore': {
+        case EventListenerIdDedupeMode.IGNORE: {
           return listenerId;
         }
         default: {
-          this.delId(listenerId, idDedupeMode === 'update');
+          this.delId(listenerId, idDedupeMode === EventListenerIdDedupeMode.UPDATE);
         }
       }
     }
@@ -131,7 +139,8 @@ export class Emitter<T extends Events> {
   protected _events: InternalEventMap;
 
   constructor(options: EmitterOptions = {}) {
-    const { idDedupeMode = 'replace', allowDuplicateListeners = true } = options;
+    const { idDedupeMode = EventListenerIdDedupeMode.APPEND, allowDuplicateListeners = true } =
+      options;
     this.idDedupeMode = idDedupeMode;
     this.allowDuplicateListeners = allowDuplicateListeners;
     this._events = new Map();
