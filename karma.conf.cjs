@@ -5,7 +5,7 @@ module.exports = function (config) {
     basePath: '',
     frameworks: ['mocha'],
     plugins: ['karma-mocha', 'karma-mocha-reporter', 'karma-browserstack-launcher'],
-    files: ['./node_modules/chai/chai.js', './tests/dist/tests.browser.js'],
+    files: ['./tests/dist/index.global.js'],
     reporters: ['mocha', 'BrowserStack'],
     logLevel: config.LOG_INFO,
     colors: true,

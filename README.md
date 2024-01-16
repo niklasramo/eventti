@@ -15,27 +15,53 @@ Regarding performance, Eventti is fine-tuned to be as fast as possible with the 
 - No dependencies.
 - MIT licensed.
 
-<h2><a id="install" href="#install" aria-hidden="true">#</a> Install</h2>
+## Getting started
 
-Node
+The library is provided as an ECMAScript module (ESM), a CommonJS module (CJS) and as an IIFE bundle.
 
-```bash
-$ npm install eventti
+### Node
+
+```
+npm install eventti
 ```
 
-Browser
+```ts
+import { Emitter } from 'eventti';
+const emitter = new Emitter();
+```
+
+### Browser
+
+In most modern browsers you can use the ES module directly via import maps.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/eventti@3.0.0/dist/eventti.umd.js"></script>
+<script type="importmap">
+  {
+    "imports": {
+      "eventti": "https://cdn.jsdelivr.net/npm/eventti@4.0.0/dist/index.js"
+    }
+  }
+</script>
+<script type="module">
+  import { Emitter } from 'eventti';
+  const emitter = new Emitter();
+</script>
 ```
 
-Access the emitter via `window.eventti.Emitter` in browser context.
+For legacy browsers (and widest possible support) you can use the IIFE version of the library.
 
-<h2><a id="usage" href="#usage" aria-hidden="true">#</a> Usage</h2>
+```html
+<script src="https://cdn.jsdelivr.net/npm/eventti@4.0.0/dist/index.global.js"></script>
+<script>
+  const emitter = new eventti.Emitter();
+</script>
+```
 
-Basic usage is pretty much identical to most other event emitters, nothing new here really.
+## Usage
 
-```typescript
+Basic usage follows the classic event emitter pattern, which is pretty much identical in most event emitters, nothing new here really.
+
+```ts
 import { Emitter } from 'eventti';
 
 // Define emitter's events (if using TypeScript).
@@ -68,11 +94,11 @@ emitter.off('a', a);
 emitter.off('b', b);
 ```
 
-<h3><a id="usage-duplicate-listeners" href="#usage-duplicate-listeners" aria-hidden="true">#</a> Preventing duplicate listeners</h3>
+### Preventing duplicate listeners
 
 Eventti's `Emitter` allows duplicate listeners by default (as do most event emitter implementations), but sometimes it's preferable to prevent duplicate event listeners.
 
-```typescript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter({ allowDuplicateListeners: false });
@@ -82,12 +108,12 @@ emitter.on('a', listener);
 emitter.on('a', listener); // throws an error
 ```
 
-<h3><a id="usage-listener-id" href="#usage-listener-id" aria-hidden="true">#</a> Event listener ids</h3>
+### Event listener ids
 
 A useful extra feature of Eventti is that `.on()` and `.once()` methods return a unique listener id, which can be used to remove that specific listener. You can also provide the listener id manually via those methods and control how duplicate listener ids are handled.
 
-```typescript
-import { Emitter } from 'eventti';
+```ts
+import { Emitter, EmitterIdDedupeMode } from 'eventti';
 
 const emitter = new Emitter();
 const listener = () => {};
@@ -110,7 +136,7 @@ emitter.off('a', 'foo');
 // Case #1: When the idDedupeMode mode is set to "append" (which it is by
 // default) the existing listener (matching the id) will be first completely
 // removed and then the new listener will be appended to the listener queue.
-const emitter1 = new Emitter({ idDedupeMode: 'append' });
+const emitter1 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.APPEND });
 emitter1.on('a', () => console.log('foo 1'), 'foo');
 emitter1.on('a', () => console.log('bar'), 'bar');
 emitter1.on('a', () => console.log('foo 2'), 'foo');
@@ -121,7 +147,7 @@ emitter1.emit('a');
 // Case #2: When the idDedupeMode mode is set to "update" the existing listener
 // (matching the id) will be replaced with new listener while keeping the
 // listener at the same index in the listener queue.
-const emitter2 = new Emitter({ idDedupeMode: 'update' });
+const emitter2 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.UPDATE });
 emitter2.on('a', () => console.log('foo 1'), 'foo');
 emitter2.on('a', () => console.log('bar'), 'bar');
 emitter2.on('a', () => console.log('foo 2'), 'foo');
@@ -131,7 +157,7 @@ emitter2.emit('a');
 
 // Case #3: When the idDedupeMode mode is set to "ignore" the new listener is
 // simply ignored.
-const emitter3 = new Emitter({ idDedupeMode: 'ignore' });
+const emitter3 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.IGNORE });
 emitter3.on('a', () => console.log('foo 1'), 'foo');
 emitter3.on('a', () => console.log('bar'), 'bar');
 emitter3.on('a', () => console.log('foo 2'), 'foo');
@@ -140,7 +166,7 @@ emitter3.emit('a');
 // -> bar
 
 // Case #4: When the idDedupeMode mode is set to "throw" an error is thrown.
-const emitter4 = new Emitter({ idDedupeMode: 'throw' });
+const emitter4 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.THROW });
 emitter4.on('a', () => console.log('foo 1'), 'foo');
 emitter4.on('a', () => console.log('bar'), 'bar');
 emitter4.on('a', () => console.log('foo 2'), 'foo'); // throws an error
@@ -149,10 +175,10 @@ emitter4.on('a', () => console.log('foo 2'), 'foo'); // throws an error
 // instantiaiting the emitter. Just directly set the mode via emitter's
 // idDedupeMode property.
 const emitter5 = new Emitter();
-emitter5.idDedupeMode = 'throw';
+emitter5.idDedupeMode = EmitterIdDedupeMode.THROW;
 ```
 
-<h2><a id="api" href="#api" aria-hidden="true">#</a> Emitter API</h2>
+## Emitter API
 
 `Emitter` is a class which's constructor accepts an optional configuration object with the following properties:
 
@@ -167,8 +193,8 @@ emitter5.idDedupeMode = 'throw';
     - `"throw"`: as the name suggests an error will be thrown.
   - Optional. Defaults to `"append"` if omitted.
 
-```typescript
-import { Emitter } from 'eventti';
+```ts
+import { Emitter, EmitterIdDedupeMode } from 'eventti';
 
 // Define emitter's events (if using TypeScript).
 // Let the key be the event name and the value
@@ -182,7 +208,10 @@ type Events = {
 const emitterA = new Emitter<Events>();
 
 // Create emitter instance with options.
-const emitterB = new Emitter<Events>({ allowDuplicateListeners: false, idDedupeMode: 'throw' });
+const emitterB = new Emitter<Events>({
+  allowDuplicateListeners: false,
+  idDedupeMode: EmitterIdDedupeMode.THROW,
+});
 
 // You can read the `allowDuplicateListeners` setting state, but it's not
 // recommended to modify it after the emitter has been instantiated (it's a
@@ -192,7 +221,7 @@ emitterB.allowDuplicateListeners; // -> false
 // You can read and modify the `idDedupeMode` setting freely. It's okay to
 // change it's value whenever you want.
 emitterB.idDedupeMode; // -> "throw"
-emitterB.idDedupeMode = 'ignore';
+emitterB.idDedupeMode = EmitterIdDedupeMode.IGNORE;
 ```
 
 **Methods**
@@ -203,9 +232,15 @@ emitterB.idDedupeMode = 'ignore';
 - [emit( eventName, [...args] )](#emitter-emit)
 - [listenerCount( [eventName] )](#emitter-listenerCount)
 
-<h3><a id="emitter-on" href="#emitter-on" aria-hidden="true">#</a> <code>emitter.on( eventName, listener, [listenerId] )</code></h3>
+### emitter.on()
 
 Add a listener to an event.
+
+**Syntax**
+
+```
+emitter.on( eventName, listener, [ listenerId ] )
+```
 
 **Arguments**
 
@@ -222,7 +257,7 @@ A listener id, which can be used to remove this specific listener. By default th
 
 **Examples**
 
-```javascript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
@@ -260,9 +295,15 @@ emitter.emit('test');
 // b
 ```
 
-<h3><a id="emitter-once" href="#emitter-once" aria-hidden="true">#</a> <code>emitter.once( eventName, listener, [listenerId] )</code></h3>
+### emitter.once()
 
 Add a one-off listener to an event.
+
+**Syntax**
+
+```
+emitter.once( eventName, listener, [ listenerId ] )
+```
 
 **Arguments**
 
@@ -279,7 +320,7 @@ A listener id, which can be used to remove this specific listener. By default th
 
 **Examples**
 
-```javascript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
@@ -297,9 +338,15 @@ emitter.emit('test');
 // a
 ```
 
-<h3><a id="emitter-off" href="#emitter-off" aria-hidden="true">#</a> <code>emitter.off( [eventName], [target] )</code></h3>
+### emitter.off()
 
 Remove an event listener or multiple event listeners. If no _target_ is provided all listeners for the specified event will be removed. If no _eventName_ is provided all listeners from the emitter will be removed.
+
+**Syntax**
+
+```
+emitter.off( [ eventName ], [ target ] );
+```
 
 **Arguments**
 
@@ -310,7 +357,7 @@ Remove an event listener or multiple event listeners. If no _target_ is provided
 
 **Examples**
 
-```javascript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
@@ -336,9 +383,15 @@ emitter.off('test');
 emitter.off();
 ```
 
-<h3><a id="emitter-emit" href="#emitter-emit" aria-hidden="true">#</a> <code>emitter.emit( eventName, [...args] )</code></h3>
+### emitter.emit()
 
 Emit events.
+
+**Syntax**
+
+```
+emitter.emit( eventName, [ ...args ] )
+```
 
 **Arguments**
 
@@ -349,7 +402,7 @@ Emit events.
 
 **Examples**
 
-```javascript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
@@ -361,9 +414,15 @@ emitter.emit('test', 1, 2, 3, 'a', 'b', 'c');
 // '1-2-3-a-b-c'
 ```
 
-<h3><a id="emitter-listenerCount" href="#emitter-listenerCount" aria-hidden="true">#</a> <code>emitter.listenerCount( [eventName] )</code></h3>
+### emitter.listenerCount()
 
 Returns the listener count for an event if _eventName_ is provided. Otherwise returns the listener count for the whole emitter.
+
+**Syntax**
+
+```
+emitter.listenerCount( [ eventName ] )
+```
 
 **Arguments**
 
@@ -372,7 +431,7 @@ Returns the listener count for an event if _eventName_ is provided. Otherwise re
 
 **Examples**
 
-```javascript
+```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter();
@@ -390,6 +449,6 @@ emitter.listenerCount('c'); // 3
 emitter.listenerCount(); // 6
 ```
 
-<h2><a id="license" href="#license" aria-hidden="true">#</a> License</h2>
+## License
 
 Copyright © 2022, Niklas Rämö (inramo@gmail.com). Licensed under the MIT license.

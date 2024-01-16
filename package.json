@@ -22,14 +22,11 @@
   },
   "type": "module",
   "source": "./src/index.ts",
-  "main": "./dist/eventti.js",
-  "umd:main": "./dist/eventti.umd.js",
-  "module": "./dist/eventti.js",
-  "types": "./dist/eventti.d.ts",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
-      "import": "./dist/eventti.js",
-      "require": "./dist/eventti.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -42,23 +39,19 @@
   "scripts": {
     "test": "npm run ts-check && npm run test-node && npm run test-browser",
     "test-browser": "karma start karma.conf.cjs",
-    "test-node": "mocha tests/dist/tests.node.js",
-    "build": "npm run del-dist && npm run ts-check && npm run format && npm run bundle && npm run minify && npm run size",
-    "bundle": "rollup -c",
+    "test-node": "mocha tests/dist/index.js",
+    "build": "npm run ts-check && npm run format && npm run build-lib && npm run build-tests",
+    "build-lib": "rimraf ./dist && tsup --config ./tsup.config.lib.ts",
+    "build-tests": "rimraf ./tests/dist && tsup --config ./tsup.config.tests.ts",
     "ts-check": "tsc --noEmit",
-    "del-dist": "rimraf ./dist && rimraf ./tests/dist",
     "format": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
-    "format-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
-    "size": "for file in ./dist/*.js; do echo $file && gzip-size $file --include-original; done",
-    "minify": "for file in ./dist/*.js; do terser $file -o $file --compress --mangle --comments false; done"
+    "format-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\""
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "11.1.6",
     "@types/chai": "4.3.11",
     "@types/mocha": "10.0.6",
     "chai": "4.4.1",
     "dotenv": "16.3.1",
-    "gzip-size-cli": "5.1.0",
     "karma": "6.4.2",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",
@@ -66,9 +59,7 @@
     "mocha": "10.2.0",
     "prettier": "3.2.0",
     "rimraf": "5.0.5",
-    "rollup": "4.9.5",
-    "rollup-plugin-dts": "6.1.0",
-    "terser": "5.26.0",
+    "tsup": "8.0.1",
     "typescript": "5.3.3"
   }
 }

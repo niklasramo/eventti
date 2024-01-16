@@ -1,17 +1,17 @@
 type EventName = string | number | symbol;
 type EventListener = (...data: any) => any;
 type EventListenerId = string | number | symbol;
-declare const EventListenerIdDedupeMode: {
+type Events = Record<EventName, EventListener>;
+declare const EmitterIdDedupeMode: {
     readonly APPEND: "append";
     readonly UPDATE: "update";
     readonly IGNORE: "ignore";
     readonly THROW: "throw";
 };
-type EventListenerIdDedupeMode = (typeof EventListenerIdDedupeMode)[keyof typeof EventListenerIdDedupeMode];
-type Events = Record<EventName, EventListener>;
+type EmitterIdDedupeMode = (typeof EmitterIdDedupeMode)[keyof typeof EmitterIdDedupeMode];
 type EmitterOptions = {
     allowDuplicateListeners?: boolean;
-    idDedupeMode?: EventListenerIdDedupeMode;
+    idDedupeMode?: EmitterIdDedupeMode;
 };
 type InternalEventMap = Map<EventName, EventData>;
 declare class EventData {
@@ -20,12 +20,12 @@ declare class EventData {
     onceList: Set<EventListenerId>;
     emitList: EventListener[] | null;
     constructor();
-    add(listener: EventListener, once: boolean, listenerId: EventListenerId, idDedupeMode: EventListenerIdDedupeMode, allowDuplicateListeners: boolean): EventListenerId;
+    add(listener: EventListener, once: boolean, listenerId: EventListenerId, idDedupeMode: EmitterIdDedupeMode, allowDuplicateListeners: boolean): EventListenerId;
     delId(listenerId: EventListenerId, ignoreIdMap?: boolean): void;
     delFn(listener: EventListener): void;
 }
 declare class Emitter<T extends Events> {
-    idDedupeMode: EventListenerIdDedupeMode;
+    idDedupeMode: EmitterIdDedupeMode;
     readonly allowDuplicateListeners: boolean;
     protected _events: InternalEventMap;
     constructor(options?: EmitterOptions);
@@ -37,4 +37,4 @@ declare class Emitter<T extends Events> {
     listenerCount<EventName extends keyof T>(eventName?: EventName): number;
 }
 
-export { Emitter, type EmitterOptions, type EventListener, type EventListenerId, EventListenerIdDedupeMode, type EventName, type Events };
+export { Emitter, EmitterIdDedupeMode, type EmitterOptions, type EventListener, type EventListenerId, type EventName, type Events };
