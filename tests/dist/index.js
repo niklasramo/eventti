@@ -86,6 +86,7 @@ var Emitter = class {
   constructor(options = {}) {
     const { idDedupeMode = EmitterIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
     this.idDedupeMode = idDedupeMode;
+    this.createId = options.createId || Symbol;
     this.allowDuplicateListeners = allowDuplicateListeners;
     this._events = /* @__PURE__ */ new Map();
   }
@@ -110,7 +111,7 @@ var Emitter = class {
     }
     return listeners;
   }
-  on(eventName, listener, listenerId = Symbol()) {
+  on(eventName, listener, listenerId = this.createId()) {
     return getOrCreateEventData(this._events, eventName).add(
       listener,
       false,
@@ -119,7 +120,7 @@ var Emitter = class {
       this.allowDuplicateListeners
     );
   }
-  once(eventName, listener, listenerId = Symbol()) {
+  once(eventName, listener, listenerId = this.createId()) {
     return getOrCreateEventData(this._events, eventName).add(
       listener,
       true,

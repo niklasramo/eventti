@@ -4,7 +4,7 @@ Tiny and fast multi-purpose event emitter for Node.js and browser wrapped in a s
 
 By default Eventti allows adding duplicate listeners to an event, but you can configure the Emitter to throw an error when a duplicate event listener is added. Additionally, Eventti assigns unique ids to all event listeners which allows you to granularly remove specific listeners (when there are duplicate listeners) and also update/replace existing listeners in the emitter.
 
-Regarding performance, Eventti is fine-tuned to be as fast as possible with the feature set it provides. If there is room for optimization then we shall optimize ;) Please do open a ticket if you have performance optimization suggestions.
+Regarding performance, Eventti is fine-tuned to be as fast as possible _with the feature set it provides_. If there is room for optimization then we shall optimize ;) Please do open a ticket if you have performance optimization suggestions.
 
 - The classic event emitter API with useful extras.
 - Small footprint (under 1kb gzipped).
@@ -182,16 +182,19 @@ emitter5.idDedupeMode = EmitterIdDedupeMode.THROW;
 
 `Emitter` is a class which's constructor accepts an optional configuration object with the following properties:
 
-- **allowDuplicateListeners** &nbsp;&mdash;&nbsp; _boolean_
+- **allowDuplicateListeners** &nbsp;&mdash;&nbsp; `boolean`
   - When set to `false` `.on()` or `.once()` methods will throw an error if a duplicate event listener is added.
   - Optional. Defaults to `true` if omitted.
-- **idDedupeMode** &nbsp;&mdash;&nbsp; _"append" | "update" | "ignore" | "throw"_
+- **idDedupeMode** &nbsp;&mdash;&nbsp; `"append" | "update" | "ignore" | "throw"`∫
   - Defines how a duplicate event listener id is handled.
     - `"append"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
     - `"update"`: the existing listener (of the id) is replaced with the new listener without changing the index of the listener in the event's listener queue.
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
   - Optional. Defaults to `"append"` if omitted.
+- **createId** &nbsp;&mdash;&nbsp; `() => string | number | symbol`
+  - A function which is used to create listener ids. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else.
+  - Optional. Defaults to `Symbol` if omitted.
 
 ```ts
 import { Emitter, EmitterIdDedupeMode } from 'eventti';
@@ -208,9 +211,11 @@ type Events = {
 const emitterA = new Emitter<Events>();
 
 // Create emitter instance with options.
+let idCounter = 0;
 const emitterB = new Emitter<Events>({
   allowDuplicateListeners: false,
   idDedupeMode: EmitterIdDedupeMode.THROW,
+  createId: () => ++idCounter,
 });
 
 // You can read the `allowDuplicateListeners` setting state, but it's not
@@ -222,6 +227,10 @@ emitterB.allowDuplicateListeners; // -> false
 // change it's value whenever you want.
 emitterB.idDedupeMode; // -> "throw"
 emitterB.idDedupeMode = EmitterIdDedupeMode.IGNORE;
+
+// You can read and modify the `createId` setting freely. It's okay to change
+// it's value whenever you want.
+emitterB.createId = Symbol;
 ```
 
 **Methods**
@@ -244,14 +253,14 @@ emitter.on( eventName, listener, [ listenerId ] )
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
   - The event name specified as a string, number or symbol.
-- **listener** &nbsp;&mdash;&nbsp; _Function_
+- **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
   - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **listenerId** &nbsp;&mdash;&nbsp; `string | number | symbol` &nbsp;&mdash;&nbsp; _optional_
   - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _string | number | symbol_
+**Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
 
 A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
 
@@ -307,14 +316,14 @@ emitter.once( eventName, listener, [ listenerId ] )
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
   - The event name specified as a string, number or symbol.
-- **listener** &nbsp;&mdash;&nbsp; _Function_
+- **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
   - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **listenerId** &nbsp;&mdash;&nbsp; `string | number | symbol` &nbsp;&mdash;&nbsp; _optional_
   - Optionally provide listener id manually.
 
-**Returns** &nbsp;&mdash;&nbsp; _string | number | symbol_
+**Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
 
 A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
 
@@ -350,9 +359,9 @@ emitter.off( [ eventName ], [ target ] );
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol` &nbsp;&mdash;&nbsp; _optional_
   - The event name specified as a string, number or symbol.
-- **target** &nbsp;&mdash;&nbsp; _Function | string | number | symbol_ &nbsp;&mdash;&nbsp; _optional_
+- **target** &nbsp;&mdash;&nbsp; `Function | string | number | symbol` &nbsp;&mdash;&nbsp; _optional_
   - The event listener or listener id, which needs to be removed. If no _target_ is provided all listeners for the specified event will be removed.
 
 **Examples**
@@ -395,9 +404,9 @@ emitter.emit( eventName, [ ...args ] )
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _string | number | symbol_
+- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol``
   - The event name specified as a string, number or symbol.
-- **...args** &nbsp;&mdash;&nbsp; _any_ &nbsp;&mdash;&nbsp; _optional_
+- **...args** &nbsp;&mdash;&nbsp; `any` &nbsp;&mdash;&nbsp; _optional_
   - The arguments which will be provided to the listeners when called.
 
 **Examples**
@@ -426,7 +435,7 @@ emitter.listenerCount( [ eventName ] )
 
 **Arguments**
 
-- **eventName** &nbsp;&mdash;&nbsp; _string / number / symbol_
+- **eventName** &nbsp;&mdash;&nbsp; `string / number / symbol`
   - The event name specified as a string, number or symbol.
 
 **Examples**

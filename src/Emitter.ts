@@ -18,6 +18,7 @@ export type EmitterIdDedupeMode = (typeof EmitterIdDedupeMode)[keyof typeof Emit
 export type EmitterOptions = {
   allowDuplicateListeners?: boolean;
   idDedupeMode?: EmitterIdDedupeMode;
+  createId?: () => EventListenerId;
 };
 
 type InternalEventMap = Map<EventName, EventData>;
@@ -134,12 +135,14 @@ class EventData {
 
 export class Emitter<T extends Events> {
   idDedupeMode: EmitterIdDedupeMode;
+  createId: () => EventListenerId;
   readonly allowDuplicateListeners: boolean;
   protected _events: InternalEventMap;
 
   constructor(options: EmitterOptions = {}) {
     const { idDedupeMode = EmitterIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
     this.idDedupeMode = idDedupeMode;
+    this.createId = options.createId || Symbol;
     this.allowDuplicateListeners = allowDuplicateListeners;
     this._events = new Map();
   }
@@ -186,7 +189,7 @@ export class Emitter<T extends Events> {
   on<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = Symbol(),
+    listenerId: EventListenerId = this.createId(),
   ): EventListenerId {
     return getOrCreateEventData(this._events, eventName).add(
       listener,
@@ -200,7 +203,7 @@ export class Emitter<T extends Events> {
   once<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = Symbol(),
+    listenerId: EventListenerId = this.createId(),
   ): EventListenerId {
     return getOrCreateEventData(this._events, eventName).add(
       listener,

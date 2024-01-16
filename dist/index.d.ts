@@ -12,6 +12,7 @@ type EmitterIdDedupeMode = (typeof EmitterIdDedupeMode)[keyof typeof EmitterIdDe
 type EmitterOptions = {
     allowDuplicateListeners?: boolean;
     idDedupeMode?: EmitterIdDedupeMode;
+    createId?: () => EventListenerId;
 };
 type InternalEventMap = Map<EventName, EventData>;
 declare class EventData {
@@ -26,6 +27,7 @@ declare class EventData {
 }
 declare class Emitter<T extends Events> {
     idDedupeMode: EmitterIdDedupeMode;
+    createId: () => EventListenerId;
     readonly allowDuplicateListeners: boolean;
     protected _events: InternalEventMap;
     constructor(options?: EmitterOptions);
