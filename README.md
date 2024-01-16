@@ -133,10 +133,10 @@ emitter.off('a', 'foo');
 // listener id again? Well, it's up to you and Eventti allows you to choose from
 // four different options what the behaviour should be.
 
-// Case #1: When the idDedupeMode mode is set to "append" (which it is by
+// Case #1: When the idDedupeMode mode is set to "add" (which it is by
 // default) the existing listener (matching the id) will be first completely
 // removed and then the new listener will be appended to the listener queue.
-const emitter1 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.APPEND });
+const emitter1 = new Emitter({ idDedupeMode: EmitterIdDedupeMode.ADD });
 emitter1.on('a', () => console.log('foo 1'), 'foo');
 emitter1.on('a', () => console.log('bar'), 'bar');
 emitter1.on('a', () => console.log('foo 2'), 'foo');
@@ -185,13 +185,13 @@ emitter5.idDedupeMode = EmitterIdDedupeMode.THROW;
 - **allowDuplicateListeners** &nbsp;&mdash;&nbsp; `boolean`
   - When set to `false` `.on()` or `.once()` methods will throw an error if a duplicate event listener is added.
   - Optional. Defaults to `true` if omitted.
-- **idDedupeMode** &nbsp;&mdash;&nbsp; `"append" | "update" | "ignore" | "throw"`∫
+- **idDedupeMode** &nbsp;&mdash;&nbsp; `"add" | "update" | "ignore" | "throw"`∫
   - Defines how a duplicate event listener id is handled.
-    - `"append"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
+    - `"add"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
     - `"update"`: the existing listener (of the id) is replaced with the new listener without changing the index of the listener in the event's listener queue.
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
-  - Optional. Defaults to `"append"` if omitted.
+  - Optional. Defaults to `"add"` if omitted.
 - **createId** &nbsp;&mdash;&nbsp; `() => string | number | symbol`
   - A function which is used to create listener ids. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else.
   - Optional. Defaults to `Symbol` if omitted.

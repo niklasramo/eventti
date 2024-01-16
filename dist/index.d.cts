@@ -3,7 +3,7 @@ type EventListener = (...data: any) => any;
 type EventListenerId = string | number | symbol;
 type Events = Record<EventName, EventListener>;
 declare const EmitterIdDedupeMode: {
-    readonly APPEND: "append";
+    readonly ADD: "add";
     readonly UPDATE: "update";
     readonly IGNORE: "ignore";
     readonly THROW: "throw";

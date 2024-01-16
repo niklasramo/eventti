@@ -7,7 +7,7 @@ export type EventListenerId = string | number | symbol;
 export type Events = Record<EventName, EventListener>;
 
 export const EmitterIdDedupeMode = {
-  APPEND: 'append',
+  ADD: 'add',
   UPDATE: 'update',
   IGNORE: 'ignore',
   THROW: 'throw',
@@ -140,7 +140,7 @@ export class Emitter<T extends Events> {
   protected _events: InternalEventMap;
 
   constructor(options: EmitterOptions = {}) {
-    const { idDedupeMode = EmitterIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
+    const { idDedupeMode = EmitterIdDedupeMode.ADD, allowDuplicateListeners = true } = options;
     this.idDedupeMode = idDedupeMode;
     this.createId = options.createId || Symbol;
     this.allowDuplicateListeners = allowDuplicateListeners;

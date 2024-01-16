@@ -3,7 +3,7 @@ import { assert } from "chai";
 
 // src/Emitter.ts
 var EmitterIdDedupeMode = {
-  APPEND: "append",
+  ADD: "add",
   UPDATE: "update",
   IGNORE: "ignore",
   THROW: "throw"
@@ -84,7 +84,7 @@ var EventData = class {
 };
 var Emitter = class {
   constructor(options = {}) {
-    const { idDedupeMode = EmitterIdDedupeMode.APPEND, allowDuplicateListeners = true } = options;
+    const { idDedupeMode = EmitterIdDedupeMode.ADD, allowDuplicateListeners = true } = options;
     this.idDedupeMode = idDedupeMode;
     this.createId = options.createId || Symbol;
     this.allowDuplicateListeners = allowDuplicateListeners;
@@ -229,7 +229,7 @@ describe("emitter.on()", () => {
   describe("emitter.on(eventName, listener, listenerId)", () => {
     it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
       ["", "foo", 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        ["ignore", "append", "update", "throw"].forEach((idDedupeMode) => {
+        ["add", "update", "ignore", "throw"].forEach((idDedupeMode) => {
           const emitter = new Emitter({ idDedupeMode });
           let count = 0;
           const listener = () => {
@@ -269,8 +269,8 @@ describe("emitter.on()", () => {
       assert.throws(() => emitter.on("test", () => {
       }, "foo"));
     });
-    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
-      const emitter = new Emitter({ idDedupeMode: "append" });
+    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "add"', () => {
+      const emitter = new Emitter({ idDedupeMode: "add" });
       let result = "";
       emitter.on("test", () => void (result += "1"), "foo");
       emitter.on("test", () => void (result += "2"));
@@ -342,7 +342,7 @@ describe("emitter.once()", () => {
   describe("emitter.once(eventName, listener, listenerId)", () => {
     it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
       ["", "foo", 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        ["ignore", "append", "update", "throw"].forEach((idDedupeMode) => {
+        ["add", "update", "ignore", "throw"].forEach((idDedupeMode) => {
           const emitter = new Emitter({ idDedupeMode });
           let count = 0;
           const listener = () => {
@@ -378,8 +378,8 @@ describe("emitter.once()", () => {
       assert.throws(() => emitter.once("test", () => {
       }, "foo"));
     });
-    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "append"', () => {
-      const emitter = new Emitter({ idDedupeMode: "append" });
+    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "add"', () => {
+      const emitter = new Emitter({ idDedupeMode: "add" });
       let result = "";
       emitter.once("test", () => void (result += "1"), "foo");
       emitter.once("test", () => void (result += "2"));
