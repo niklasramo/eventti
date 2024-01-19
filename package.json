@@ -45,9 +45,11 @@
     "build-tests": "rimraf ./tests/dist && tsup --config ./tsup.config.tests.ts",
     "ts-check": "tsc --noEmit",
     "format": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
-    "format-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\""
+    "format-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
+    "size-check": "size-limit"
   },
   "devDependencies": {
+    "@size-limit/preset-small-lib": "11.0.2",
     "@types/chai": "4.3.11",
     "@types/mocha": "10.0.6",
     "chai": "4.4.1",
@@ -57,8 +59,9 @@
     "karma-mocha": "2.0.1",
     "karma-mocha-reporter": "2.2.5",
     "mocha": "10.2.0",
-    "prettier": "3.2.0",
+    "prettier": "3.2.4",
     "rimraf": "5.0.5",
+    "size-limit": "11.0.2",
     "tsup": "8.0.1",
     "typescript": "5.3.3"
   }
