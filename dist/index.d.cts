@@ -17,7 +17,7 @@ type EmitterOptions = {
 type InternalEventMap = Map<EventName, EventData>;
 declare class EventData {
     idMap: Map<EventListenerId, EventListener>;
-    fnMap: Map<EventListener, Set<EventListenerId>>;
+    cbMap: Map<EventListener, Set<EventListenerId>>;
     onceList: Set<EventListenerId>;
     emitList: EventListener[] | null;
     constructor();

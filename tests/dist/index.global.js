@@ -4248,12 +4248,12 @@
   var EventData = class {
     constructor() {
       this.idMap = /* @__PURE__ */ new Map();
-      this.fnMap = /* @__PURE__ */ new Map();
+      this.cbMap = /* @__PURE__ */ new Map();
       this.onceList = /* @__PURE__ */ new Set();
       this.emitList = null;
     }
     add(listener, once, listenerId, idDedupeMode, allowDuplicateListeners) {
-      if (!allowDuplicateListeners && this.fnMap.has(listener)) {
+      if (!allowDuplicateListeners && this.cbMap.has(listener)) {
         throw new Error("Emitter: tried to add an existing event listener to an event!");
       }
       if (this.idMap.has(listenerId)) {
@@ -4269,10 +4269,10 @@
           }
         }
       }
-      let listenerIds = this.fnMap.get(listener);
+      let listenerIds = this.cbMap.get(listener);
       if (!listenerIds) {
         listenerIds = /* @__PURE__ */ new Set();
-        this.fnMap.set(listener, listenerIds);
+        this.cbMap.set(listener, listenerIds);
       }
       listenerIds.add(listenerId);
       this.idMap.set(listenerId, listener);
@@ -4288,26 +4288,26 @@
       const listener = this.idMap.get(listenerId);
       if (!listener)
         return;
-      const listenerIds = this.fnMap.get(listener);
+      const listenerIds = this.cbMap.get(listener);
       if (!ignoreIdMap) {
         this.idMap.delete(listenerId);
       }
       this.onceList.delete(listenerId);
       listenerIds.delete(listenerId);
       if (!listenerIds.size) {
-        this.fnMap.delete(listener);
+        this.cbMap.delete(listener);
       }
       this.emitList = null;
     }
     delFn(listener) {
-      const listenerIds = this.fnMap.get(listener);
+      const listenerIds = this.cbMap.get(listener);
       if (!listenerIds)
         return;
-      listenerIds.forEach((listenerId) => {
+      for (const listenerId of listenerIds) {
         this.onceList.delete(listenerId);
         this.idMap.delete(listenerId);
-      });
-      this.fnMap.delete(listener);
+      }
+      this.cbMap.delete(listener);
       this.emitList = null;
     }
   };

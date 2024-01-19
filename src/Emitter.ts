@@ -34,13 +34,13 @@ function getOrCreateEventData(events: InternalEventMap, eventName: EventName) {
 
 class EventData {
   idMap: Map<EventListenerId, EventListener>;
-  fnMap: Map<EventListener, Set<EventListenerId>>;
+  cbMap: Map<EventListener, Set<EventListenerId>>;
   onceList: Set<EventListenerId>;
   emitList: EventListener[] | null;
 
   constructor() {
     this.idMap = new Map();
-    this.fnMap = new Map();
+    this.cbMap = new Map();
     this.onceList = new Set();
     this.emitList = null;
   }
@@ -53,7 +53,7 @@ class EventData {
     allowDuplicateListeners: boolean,
   ): EventListenerId {
     // Handle duplicate listeners.
-    if (!allowDuplicateListeners && this.fnMap.has(listener)) {
+    if (!allowDuplicateListeners && this.cbMap.has(listener)) {
       throw new Error('Emitter: tried to add an existing event listener to an event!');
     }
 
@@ -72,15 +72,15 @@ class EventData {
       }
     }
 
-    // Get existing listener ids for the listener (create if non-existent).
-    let listenerIds = this.fnMap.get(listener);
+    // Store listener to callback map.
+    let listenerIds = this.cbMap.get(listener);
     if (!listenerIds) {
       listenerIds = new Set();
-      this.fnMap.set(listener, listenerIds);
+      this.cbMap.set(listener, listenerIds);
     }
-
-    // Store listener and listener id.
     listenerIds.add(listenerId);
+
+    // Store listener to id map.
     this.idMap.set(listenerId, listener);
 
     // Add to once list if needed.
@@ -89,8 +89,8 @@ class EventData {
     }
 
     // Add to emit list if needed. We can safely add new listeners to the
-    // end of emit list even if it is currently looping, but we can't remove
-    // items from it.
+    // end of emit list even if it is currently emitting, but we can't remove
+    // items from it while it is emitting.
     if (this.emitList) {
       this.emitList.push(listener);
     }
@@ -102,7 +102,7 @@ class EventData {
     const listener = this.idMap.get(listenerId);
     if (!listener) return;
 
-    const listenerIds = this.fnMap.get(listener) as Set<EventListenerId>;
+    const listenerIds = this.cbMap.get(listener) as Set<EventListenerId>;
 
     if (!ignoreIdMap) {
       this.idMap.delete(listenerId);
@@ -113,22 +113,22 @@ class EventData {
     listenerIds.delete(listenerId);
 
     if (!listenerIds.size) {
-      this.fnMap.delete(listener);
+      this.cbMap.delete(listener);
     }
 
     this.emitList = null;
   }
 
   delFn(listener: EventListener) {
-    const listenerIds = this.fnMap.get(listener);
+    const listenerIds = this.cbMap.get(listener);
     if (!listenerIds) return;
 
-    listenerIds.forEach((listenerId) => {
+    for (const listenerId of listenerIds) {
       this.onceList.delete(listenerId);
       this.idMap.delete(listenerId);
-    });
+    }
 
-    this.fnMap.delete(listener);
+    this.cbMap.delete(listener);
     this.emitList = null;
   }
 }
