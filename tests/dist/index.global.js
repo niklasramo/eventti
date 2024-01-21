@@ -4230,7 +4230,7 @@
   var assert = import_index.default.assert;
   var core = import_index.default.core;
 
-  // src/Emitter.ts
+  // src/index.ts
   var EmitterIdDedupeMode = {
     ADD: "add",
     UPDATE: "update",
@@ -4269,12 +4269,14 @@
           }
         }
       }
-      let listenerIds = this.cbMap.get(listener);
-      if (!listenerIds) {
-        listenerIds = /* @__PURE__ */ new Set();
-        this.cbMap.set(listener, listenerIds);
+      const cbListenerIds = this.cbMap.get(listener);
+      if (cbListenerIds === void 0) {
+        this.cbMap.set(listener, listenerId);
+      } else if (cbListenerIds instanceof Set) {
+        cbListenerIds.add(listenerId);
+      } else {
+        this.cbMap.set(listener, /* @__PURE__ */ new Set([cbListenerIds, listenerId]));
       }
-      listenerIds.add(listenerId);
       this.idMap.set(listenerId, listener);
       if (once) {
         this.onceList.add(listenerId);
@@ -4288,24 +4290,33 @@
       const listener = this.idMap.get(listenerId);
       if (!listener)
         return;
-      const listenerIds = this.cbMap.get(listener);
       if (!ignoreIdMap) {
         this.idMap.delete(listenerId);
       }
       this.onceList.delete(listenerId);
-      listenerIds.delete(listenerId);
-      if (!listenerIds.size) {
+      const cbListenerIds = this.cbMap.get(listener);
+      if (cbListenerIds instanceof Set) {
+        cbListenerIds.delete(listenerId);
+        if (!cbListenerIds.size) {
+          this.cbMap.delete(listener);
+        }
+      } else {
         this.cbMap.delete(listener);
       }
       this.emitList = null;
     }
     delFn(listener) {
-      const listenerIds = this.cbMap.get(listener);
-      if (!listenerIds)
+      const cbListenerIds = this.cbMap.get(listener);
+      if (cbListenerIds === void 0)
         return;
-      for (const listenerId of listenerIds) {
-        this.onceList.delete(listenerId);
-        this.idMap.delete(listenerId);
+      if (cbListenerIds instanceof Set) {
+        for (const listenerId of cbListenerIds) {
+          this.onceList.delete(listenerId);
+          this.idMap.delete(listenerId);
+        }
+      } else {
+        this.onceList.delete(cbListenerIds);
+        this.idMap.delete(cbListenerIds);
       }
       this.cbMap.delete(listener);
       this.emitList = null;
