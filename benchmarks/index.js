@@ -2,9 +2,11 @@
 
 import { suite as emitSuite } from './suites/lib/emit.js';
 import { suite as onSuite } from './suites/lib/on.js';
+import { suite as onceSuite } from './suites/lib/once.js';
+import { suite as offSuite } from './suites/lib/off.js';
 
 // Collect all suites.
-const suites = [onSuite, emitSuite];
+const suites = [onSuite, onceSuite, offSuite, emitSuite];
 
 // Setup suites to run in sequence.
 for (let i = 0; i < suites.length; ++i) {

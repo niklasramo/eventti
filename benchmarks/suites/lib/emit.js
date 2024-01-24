@@ -59,3 +59,8 @@ let counterIndex = -1;
 suite.on('cycle', logResult).on('error', (event) => {
   console.error(event.target.error.toString());
 });
+
+suite.on('complete', () => {
+  eventtiEmitter.off();
+  nanoEmitter.events = {};
+});

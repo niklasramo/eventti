@@ -6,17 +6,24 @@ import { Emitter as EventtiEmitter } from '../../../dist/index.js';
 import { logResult } from '../../utils/log-result.js';
 
 // Create test suite.
-export const suite = new Benchmark.Suite('On');
+export const suite = new Benchmark.Suite('Once');
 
 // Create test emitters.
 const nanoEmitter = createNanoEmitter();
 const eventtiEmitter = new EventtiEmitter();
-const eventtiEmitterNoDuplicates = new EventtiEmitter({ allowDuplicateListeners: false });
+
+// Add once method to nanoevents emitter (as instructed in nanoevents README).
+nanoEmitter.once = (event, callback) => {
+  const unbind = nanoEmitter.on(event, (...args) => {
+    unbind();
+    callback(...args);
+  });
+  return unbind;
+};
 
 // Create map for getting emitter name.
 const emitterNames = new Map();
 emitterNames.set(eventtiEmitter, 'eventti');
-emitterNames.set(eventtiEmitterNoDuplicates, 'eventti (deduped)');
 emitterNames.set(nanoEmitter, 'nano');
 
 // Store counters for emit tests, used to prevent dead code elimination.
@@ -25,21 +32,35 @@ let counterIndex = -1;
 
 // Setup tests.
 [1, 10, 100, 1000].forEach((listenerCount) => {
-  [eventtiEmitter, eventtiEmitterNoDuplicates, nanoEmitter].forEach((emitter) => {
+  [eventtiEmitter, nanoEmitter].forEach((emitter) => {
     const emitterName = emitterNames.get(emitter);
     const ci = ++counterIndex;
 
-    suite.add(`${emitterName}:Add ${listenerCount} listeners`, () => {
+    suite.add(`${emitterName}:Add ${listenerCount} once listeners`, () => {
       for (let i = 0; i < listenerCount; ++i) {
-        emitter.on(`test-${listenerCount}`, () => {
+        emitter.once(`test-1-${listenerCount}`, () => {
           counters[ci] += 1;
         });
       }
       if (emitter === nanoEmitter) {
         emitter.events = {};
       } else {
-        emitter.off(`test-${listenerCount}`);
+        emitter.off(`test-1-${listenerCount}`);
       }
+    });
+  });
+
+  [eventtiEmitter, nanoEmitter].forEach((emitter) => {
+    const emitterName = emitterNames.get(emitter);
+    const ci = ++counterIndex;
+
+    suite.add(`${emitterName}:Add and emit ${listenerCount} once listeners`, () => {
+      for (let i = 0; i < listenerCount; ++i) {
+        emitter.once(`test-2-${listenerCount}`, () => {
+          counters[ci] += 1;
+        });
+      }
+      emitter.emit(`test-2-${listenerCount}`);
     });
   });
 });
@@ -50,6 +71,5 @@ suite.on('cycle', logResult).on('error', (event) => {
 
 suite.on('complete', () => {
   eventtiEmitter.off();
-  eventtiEmitterNoDuplicates.off();
   nanoEmitter.events = {};
 });
