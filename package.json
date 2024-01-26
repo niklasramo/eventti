@@ -57,6 +57,8 @@
     "benchmark": "2.1.4",
     "chai": "4.4.1",
     "dotenv": "16.3.1",
+    "eventemitter3": "5.0.1",
+    "eventti3": "git://github.com/niklasramo/eventti.git#3.0.0",
     "karma": "6.4.2",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",

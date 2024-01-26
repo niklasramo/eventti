@@ -1,8 +1,8 @@
 import { assert } from 'chai';
 import { Emitter } from '../../src/index.js';
 
-describe('eventName', () => {
-  it(`should be allowed to be a string, number or symbol in all methods`, () => {
+describe('event name', () => {
+  it(`should be allowed to be a string, number or symbol`, () => {
     ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((eventName) => {
       const emitter = new Emitter();
       let counter = 0;
@@ -21,96 +21,83 @@ describe('eventName', () => {
   });
 });
 
-describe('emitter.on()', () => {
-  describe('emitter.on(eventName, listener)', () => {
-    it(`should return a symbol which serves as a unique id and can be used to remove the listener`, () => {
+describe('listener id', () => {
+  it(`should be allowed to be any value except undefined or null`, () => {
+    ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol(), true, false, [], {}, () => {}].forEach(
+      (listenerId) => {
+        const emitter = new Emitter();
+        let counter = 0;
+
+        emitter.once(
+          'test',
+          () => {
+            ++counter;
+          },
+          listenerId,
+        );
+        assert.equal(emitter.listenerCount(), 1);
+        emitter.emit('test');
+        assert.equal(emitter.listenerCount(), 0);
+        assert.equal(counter, 1);
+
+        emitter.on(
+          'test',
+          () => {
+            ++counter;
+          },
+          listenerId,
+        );
+        emitter.emit('test');
+        assert.equal(emitter.listenerCount(), 1);
+        assert.equal(counter, 2);
+        emitter.off('test', listenerId);
+        assert.equal(emitter.listenerCount(), 0);
+      },
+    );
+  });
+});
+
+describe('constructor options', () => {
+  describe('createId', () => {
+    it(`should default to creating a new Symbol if omitted`, () => {
       const emitter = new Emitter();
-      let counter = 0;
-      const listenerId = emitter.on('test', () => {
-        ++counter;
+      const idA = emitter.on('test', () => {});
+      const idB = emitter.once('test', () => {});
+      assert.equal(typeof idA, 'symbol');
+      assert.equal(typeof idB, 'symbol');
+      assert.notEqual(idA, idB);
+    });
+
+    it(`should be a function that generates a new listener id`, () => {
+      let id = 0;
+      const emitter = new Emitter({ createId: () => ++id });
+
+      const idA = emitter.on('test', () => {});
+      assert.equal(idA, id);
+
+      const idB = emitter.once('test', () => {});
+      assert.equal(idB, id);
+    });
+
+    it(`should receive the listener callback as it's only argument`, () => {
+      const emitter = new Emitter({
+        createId: (...args) => {
+          assert.equal(args.length, 1);
+          return args[0];
+        },
       });
 
-      emitter.off('test', listenerId);
-      emitter.emit('test');
+      const listenerA = () => {};
+      assert.equal(emitter.on('test', listenerA), listenerA);
 
-      assert.equal(typeof listenerId, 'symbol');
-      assert.equal(counter, 0);
-    });
-
-    it('should allow duplicate listeners by default', () => {
-      const emitter = new Emitter();
-      let counter = 0;
-      const listener = () => {
-        ++counter;
-      };
-
-      emitter.on('test', listener);
-      emitter.on('test', listener);
-      emitter.emit('test');
-
-      assert.equal(emitter.allowDuplicateListeners, true);
-      assert.equal(counter, 2);
-    });
-
-    it('should throw an error when emitter.allowDuplicateListeners is false and a duplicate listener is added', () => {
-      const emitter = new Emitter({ allowDuplicateListeners: false });
-      const listener = () => {};
-      emitter.on('test', listener);
-      assert.equal(emitter.allowDuplicateListeners, false);
-      assert.throws(() => emitter.on('test', listener));
+      const listenerB = () => {};
+      assert.equal(emitter.once('test', listenerB), listenerB);
     });
   });
 
-  describe('emitter.on(eventName, listener, listenerId)', () => {
-    it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
-      ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        (['add', 'update', 'ignore', 'throw'] as const).forEach((idDedupeMode) => {
-          const emitter = new Emitter({ idDedupeMode });
-          let count = 0;
-          const listener = () => {
-            ++count;
-          };
-
-          assert.equal(emitter.on('test', listener, listenerId), listenerId);
-
-          if (idDedupeMode === 'throw') {
-            try {
-              assert.throws(() => emitter.on('test', listener, listenerId));
-            } catch (e) {}
-          } else {
-            assert.equal(emitter.on('test', listener, listenerId), listenerId);
-          }
-
-          emitter.emit('test');
-          assert.equal(count, 1);
-          assert.equal(emitter.listenerCount('test'), 1);
-
-          emitter.off('test', listenerId);
-          assert.equal(emitter.listenerCount('test'), 0);
-
-          emitter.emit('test');
-          assert.equal(count, 1);
-        });
-      });
-    });
-
-    it('should ignore the listener silenty when duplicate id is provided and emitter.idDedupeMode is set to "ignore"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'ignore' });
-      let result = 0;
-      emitter.on('test', () => void (result = 1), 'foo');
-      emitter.on('test', () => void (result = 2), 'foo');
-      emitter.emit('test');
-      assert.equal(result, 1);
-    });
-
-    it('should throw an error when duplicate id is provided and emitter.idDedupeMode is set to "throw"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'throw' });
-      emitter.on('test', () => {}, 'foo');
-      assert.throws(() => emitter.on('test', () => {}, 'foo'));
-    });
-
-    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "add"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'add' });
+  describe('dedupeMode', () => {
+    it(`should default to "add" if omitted`, () => {
+      const emitter = new Emitter();
       let result = '';
       emitter.on('test', () => void (result += '1'), 'foo');
       emitter.on('test', () => void (result += '2'));
@@ -119,185 +106,166 @@ describe('emitter.on()', () => {
       assert.equal(result, '23');
     });
 
-    it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'update' });
-      let result = '';
-      emitter.on('test', () => void (result += '1'), 'foo');
-      emitter.on('test', () => void (result += '2'));
-      emitter.on('test', () => void (result += '3'), 'foo');
+    describe('add', () => {
+      it(`should add the duplicate listener to the end of the queue`, () => {
+        const emitter = new Emitter({ dedupeMode: 'add' });
+        let result = '';
+        emitter.on('test', () => void (result += '1'), 'foo');
+        emitter.on('test', () => void (result += '2'));
+        emitter.on('test', () => void (result += '3'), 'foo');
+        emitter.emit('test');
+        assert.equal(result, '23');
+      });
+    });
+
+    describe('update', () => {
+      it(`should update the existing listener with the new listener`, () => {
+        const emitter = new Emitter({ dedupeMode: 'update' });
+        let result = '';
+        emitter.on('test', () => void (result += '1'), 'foo');
+        emitter.on('test', () => void (result += '2'));
+        emitter.on('test', () => void (result += '3'), 'foo');
+        emitter.emit('test');
+        assert.equal(result, '32');
+      });
+    });
+
+    describe('ignore', () => {
+      it(`should ignore the duplicate listener`, () => {
+        const emitter = new Emitter({ dedupeMode: 'ignore' });
+        let result = 0;
+        emitter.on('test', () => void (result = 1), 'foo');
+        emitter.on('test', () => void (result = 2), 'foo');
+        emitter.emit('test');
+        assert.equal(result, 1);
+      });
+    });
+
+    describe('throw', () => {
+      it(`should throw an error`, () => {
+        const emitter = new Emitter({ dedupeMode: 'throw' });
+        emitter.on('test', () => {}, 'foo');
+        assert.throws(() => emitter.on('test', () => {}, 'foo'));
+      });
+    });
+  });
+});
+
+describe('emitter.on()', () => {
+  describe('emitter.on(eventName, listener)', () => {
+    it(`should return a symbol (listener id) by default`, () => {
+      const emitter = new Emitter();
+      assert.equal(typeof emitter.on('test', () => {}), 'symbol');
+    });
+
+    it(`should add an event listener`, () => {
+      const emitter = new Emitter();
+      let counter = 0;
+
+      emitter.on('test', () => void ++counter);
+
       emitter.emit('test');
-      assert.equal(result, '32');
+      assert.equal(counter, 1);
+
+      emitter.emit('test');
+      assert.equal(counter, 2);
+    });
+
+    it('should allow duplicate listeners', () => {
+      const emitter = new Emitter();
+      let counter = 0;
+      const listener = () => void ++counter;
+
+      emitter.on('test', listener);
+      emitter.on('test', listener);
+      emitter.emit('test');
+      assert.equal(counter, 2);
+    });
+  });
+
+  describe('emitter.on(eventName, listener, listenerId)', () => {
+    it(`should return the provided listener id`, () => {
+      const emitter = new Emitter();
+      assert.equal(
+        emitter.on('test', () => {}, 'foo'),
+        'foo',
+      );
     });
   });
 });
 
 describe('emitter.once()', () => {
   describe('emitter.once(eventName, listener)', () => {
-    it(`should return a symbol which serves as a unique id and can be used to remove the listener`, () => {
+    it(`should return a symbol (listener id) by default`, () => {
       const emitter = new Emitter();
-      let counter = 0;
-      const listenerId = emitter.once('test', () => {
-        ++counter;
+      assert.equal(typeof emitter.once('test', () => {}), 'symbol');
+    });
+
+    it(`should add an event listener that triggers only once`, () => {
+      const emitter = new Emitter();
+      let values: number[] = [];
+
+      emitter.once('test', () => {
+        values.push(1);
+        emitter.once('test', () => {
+          values.push(4);
+        });
+        emitter.emit('test');
       });
 
-      emitter.off('test', listenerId);
-      emitter.emit('test');
-
-      assert.equal(typeof listenerId, 'symbol');
-      assert.equal(counter, 0);
-    });
-
-    it('should allow duplicate listeners by default', () => {
-      const emitter = new Emitter();
-      let counter = 0;
-      const listener = () => {
-        ++counter;
-      };
-
-      emitter.once('test', listener);
-      emitter.once('test', listener);
-      emitter.emit('test');
-
-      assert.equal(emitter.allowDuplicateListeners, true);
-      assert.equal(counter, 2);
-    });
-
-    it('should throw an error when emitter.allowDuplicateListeners is false and a duplicate listener is added', () => {
-      const emitter = new Emitter({ allowDuplicateListeners: false });
-      const listener = () => {};
-      emitter.once('test', listener);
-      assert.equal(emitter.allowDuplicateListeners, false);
-      assert.throws(() => emitter.once('test', listener));
-    });
-
-    it(`should only trigger once`, () => {
-      const emitter = new Emitter();
-      let counter = 0;
-      const onTest = () => {
-        emitter.off('test', onTest);
+      emitter.once('test', () => {
+        values.push(2);
         emitter.emit('test');
-      };
-      const onceTest = () => {
-        ++counter;
-      };
+      });
 
-      emitter.on('test', onTest);
-      emitter.once('test', onceTest);
+      emitter.once('test', () => {
+        values.push(3);
+        emitter.emit('test');
+      });
+
       emitter.emit('test');
       emitter.emit('test');
 
-      assert.equal(counter, 1);
+      assert.deepEqual(values, [1, 2, 3, 4]);
+    });
+
+    it('should allow duplicate listeners', () => {
+      const emitter = new Emitter();
+      let counter = 0;
+      const listener = () => void ++counter;
+
+      emitter.once('test', listener);
+      emitter.once('test', listener);
+      emitter.emit('test');
+      assert.equal(counter, 2);
     });
   });
 
   describe('emitter.once(eventName, listener, listenerId)', () => {
-    it(`should accept any string, number or symbol as the listener id and always return the provided listener id, which can be used to remove the listener`, () => {
-      ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol()].forEach((listenerId) => {
-        (['add', 'update', 'ignore', 'throw'] as const).forEach((idDedupeMode) => {
-          const emitter = new Emitter({ idDedupeMode });
-          let count = 0;
-          const listener = () => {
-            ++count;
-          };
-
-          assert.equal(emitter.once('test', listener, listenerId), listenerId);
-
-          if (idDedupeMode === 'throw') {
-            assert.throws(() => emitter.once('test', listener, listenerId));
-          } else {
-            assert.equal(emitter.once('test', listener, listenerId), listenerId);
-          }
-
-          emitter.emit('test');
-          assert.equal(count, 1);
-
-          emitter.once('test', listener, listenerId);
-          emitter.off('test', listenerId);
-          emitter.emit('test');
-          assert.equal(count, 1);
-        });
-      });
-    });
-
-    it('should ignore the listener silenty when duplicate id is provided and emitter.idDedupeMode is set to "ignore"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'ignore' });
-      let result = 0;
-      emitter.once('test', () => void (result = 1), 'foo');
-      emitter.once('test', () => void (result = 2), 'foo');
-      emitter.emit('test');
-      assert.equal(result, 1);
-    });
-
-    it('should throw an error when duplicate id is provided and emitter.idDedupeMode is set to "throw"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'throw' });
-      emitter.once('test', () => {}, 'foo');
-      assert.throws(() => emitter.once('test', () => {}, 'foo'));
-    });
-
-    it('should remove the existing listener id and append the new listener id to the listener queue when duplicate id is provided and emitter.idDedupeMode is set to "add"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'add' });
-      let result = '';
-      emitter.once('test', () => void (result += '1'), 'foo');
-      emitter.once('test', () => void (result += '2'));
-      emitter.once('test', () => void (result += '3'), 'foo');
-      emitter.emit('test');
-      assert.equal(result, '23');
-    });
-
-    it('should update the existing listener id`s listener with the new listener when duplicate id is provided and emitter.idDedupeMode is set to "update"', () => {
-      const emitter = new Emitter({ idDedupeMode: 'update' });
-      let result = '';
-      emitter.once('test', () => void (result += '1'), 'foo');
-      emitter.once('test', () => void (result += '2'));
-      emitter.once('test', () => void (result += '3'), 'foo');
-      emitter.emit('test');
-      assert.equal(result, '32');
+    it(`should return the provided listener id`, () => {
+      const emitter = new Emitter();
+      assert.equal(
+        emitter.once('test', () => {}, 'foo'),
+        'foo',
+      );
     });
   });
 });
 
 describe('emitter.off()', () => {
-  describe('emitter.off(eventName, listenerId)', () => {
-    it(`should remove specific listener of a specific event that matches the provided listener id`, () => {
+  describe('emitter.off()', () => {
+    it(`should remove all events and their listeners from the emitter`, () => {
       const emitter = new Emitter();
-      let value = '';
-      emitter.on('test', () => {
-        value += 'a';
-      });
-      const b = emitter.on('test', () => {
-        value += 'b';
-      });
-      emitter.on('test', () => {
-        value += 'c';
-      });
 
-      emitter.off('test', b);
-      emitter.emit('test');
-      assert.equal(value, 'ac');
-    });
-  });
+      emitter.on('a', () => assert.fail());
+      emitter.on('b', () => assert.fail());
+      emitter.on('c', () => assert.fail());
+      emitter.off();
+      emitter.emit('a');
+      emitter.emit('b');
+      emitter.emit('c');
 
-  describe('emitter.off(eventName, listener)', () => {
-    it(`should remove all listeners of a specific event that matches the provided listener`, () => {
-      const emitter = new Emitter();
-      let value = '';
-      const listenerA = () => {
-        value += 'a';
-      };
-      const listenerB = () => {
-        value += 'b';
-      };
-      const listenerC = () => {
-        value += 'c';
-      };
-
-      emitter.on('test', listenerA);
-      emitter.on('test', listenerB);
-      emitter.on('test', listenerC);
-      emitter.off('test', listenerB);
-      emitter.emit('test');
-
-      assert.equal(value, 'ac');
+      assert.equal(1, 1);
     });
   });
 
@@ -315,19 +283,23 @@ describe('emitter.off()', () => {
     });
   });
 
-  describe('emitter.off()', () => {
-    it(`should remove all events and their listeners from the emitter`, () => {
+  describe('emitter.off(eventName, listenerId)', () => {
+    it(`should remove specific listener of a specific event that matches the provided listener id`, () => {
       const emitter = new Emitter();
+      let value = '';
+      emitter.on('test', () => {
+        value += 'a';
+      });
+      const b = emitter.on('test', () => {
+        value += 'b';
+      });
+      emitter.on('test', () => {
+        value += 'c';
+      });
 
-      emitter.on('a', () => assert.fail());
-      emitter.on('b', () => assert.fail());
-      emitter.on('c', () => assert.fail());
-      emitter.off();
-      emitter.emit('a');
-      emitter.emit('b');
-      emitter.emit('c');
-
-      assert.equal(1, 1);
+      emitter.off('test', b);
+      emitter.emit('test');
+      assert.equal(value, 'ac');
     });
   });
 });
@@ -348,7 +320,7 @@ describe('emitter.emit()', () => {
       assert.equal(counter, 1);
     });
 
-    it(`should execute the listeners synchronously in correct order`, () => {
+    it(`should execute the listeners synchronously in correct order with nested emits`, () => {
       const emitter = new Emitter();
       let value = '';
 

@@ -38,6 +38,26 @@ const c = (_x: number, _y: string) => {};
 }
 
 /*
+ * Check that listener id is inferred correctly
+ */
+{
+  emitter.on('a', a, 1);
+  emitter.on('a', a, 'a');
+  emitter.on('a', a, Symbol());
+  emitter.on('a', a, true);
+  emitter.on('a', a, false);
+  emitter.on('a', a, []);
+  emitter.on('a', a, {});
+  emitter.on('a', a, () => {});
+
+  // @ts-expect-error
+  emitter.emit('a', a, undefined);
+
+  // @ts-expect-error
+  emitter.emit('a', a, null);
+}
+
+/*
  * Check that 'off' args are inferred correctly
  */
 {
@@ -55,18 +75,6 @@ const c = (_x: number, _y: string) => {};
   emitter.off('c');
 
   emitter.off();
-
-  // @ts-expect-error
-  emitter.off('a', b);
-
-  // @ts-expect-error
-  emitter.off('a', c);
-
-  // @ts-expect-error
-  emitter.off('b', c);
-
-  // @ts-expect-error
-  emitter.off('c', b);
 }
 
 /*

@@ -1,23 +1,14 @@
 #!/usr/bin/env node
 
 import Benchmark from 'benchmark';
-import { createNanoEvents as createNanoEmitter } from 'nanoevents';
-import { Emitter as EventtiEmitter } from '../../../dist/index.js';
+import { createEmitters } from '../../utils/create-emitters.js';
 import { logResult } from '../../utils/log-result.js';
 
 // Create test suite.
 export const suite = new Benchmark.Suite('On');
 
-// Create test emitters.
-const nanoEmitter = createNanoEmitter();
-const eventtiEmitter = new EventtiEmitter();
-const eventtiEmitterNoDuplicates = new EventtiEmitter({ allowDuplicateListeners: false });
-
-// Create map for getting emitter name.
-const emitterNames = new Map();
-emitterNames.set(eventtiEmitter, 'eventti');
-emitterNames.set(eventtiEmitterNoDuplicates, 'eventti (deduped)');
-emitterNames.set(nanoEmitter, 'nano');
+// Create emitters.
+const { emitters, emitterNames, resetEmitters } = createEmitters();
 
 // Store counters for emit tests, used to prevent dead code elimination.
 const counters = Array(100).fill(0);
@@ -25,22 +16,51 @@ let counterIndex = -1;
 
 // Setup tests.
 [1, 10, 100, 1000].forEach((listenerCount) => {
-  [eventtiEmitter, eventtiEmitterNoDuplicates, nanoEmitter].forEach((emitter) => {
+  emitters.forEach((emitter) => {
     const emitterName = emitterNames.get(emitter);
+    const eventName = `test-${listenerCount}`;
     const ci = ++counterIndex;
 
-    suite.add(`${emitterName}:Add ${listenerCount} listeners`, () => {
-      for (let i = 0; i < listenerCount; ++i) {
-        emitter.on(`test-${listenerCount}`, () => {
-          counters[ci] += 1;
-        });
+    let suiteCallback;
+    switch (emitterName) {
+      case 'eventti 3':
+      case 'eventti 4': {
+        suiteCallback = () => {
+          for (let i = 0; i < listenerCount; ++i) {
+            emitter.on(eventName, () => {
+              counters[ci] += 1;
+            });
+          }
+          emitter.off(eventName);
+        };
+        break;
       }
-      if (emitter === nanoEmitter) {
-        emitter.events = {};
-      } else {
-        emitter.off(`test-${listenerCount}`);
+      case 'nano': {
+        suiteCallback = () => {
+          for (let i = 0; i < listenerCount; ++i) {
+            emitter.on(eventName, () => {
+              counters[ci] += 1;
+            });
+          }
+          delete emitter.events[eventName];
+        };
+        break;
       }
-    });
+      case 'eventemitter3':
+      case 'node': {
+        suiteCallback = () => {
+          for (let i = 0; i < listenerCount; ++i) {
+            emitter.on(eventName, () => {
+              counters[ci] += 1;
+            });
+          }
+          emitter.removeAllListeners(eventName);
+        };
+        break;
+      }
+    }
+
+    suite.add(`${emitterName}:Add ${listenerCount} listeners`, suiteCallback);
   });
 });
 
@@ -49,7 +69,5 @@ suite.on('cycle', logResult).on('error', (event) => {
 });
 
 suite.on('complete', () => {
-  eventtiEmitter.off();
-  eventtiEmitterNoDuplicates.off();
-  nanoEmitter.events = {};
+  resetEmitters();
 });

@@ -2,259 +2,165 @@ export type EventName = string | number | symbol;
 
 export type EventListener = (...data: any) => any;
 
-export type EventListenerId = string | number | symbol;
+export type EventListenerId = string | number | symbol | bigint | Function | Object;
 
 export type Events = Record<EventName, EventListener>;
 
-export const EmitterIdDedupeMode = {
+export const EmitterDedupeMode = {
   ADD: 'add',
   UPDATE: 'update',
   IGNORE: 'ignore',
   THROW: 'throw',
 } as const;
 
-export type EmitterIdDedupeMode = (typeof EmitterIdDedupeMode)[keyof typeof EmitterIdDedupeMode];
+export type EmitterDedupeMode = (typeof EmitterDedupeMode)[keyof typeof EmitterDedupeMode];
 
 export type EmitterOptions = {
-  allowDuplicateListeners?: boolean;
-  idDedupeMode?: EmitterIdDedupeMode;
-  createId?: () => EventListenerId;
+  dedupeMode?: EmitterDedupeMode;
+  createId?: (listener: EventListener) => EventListenerId;
 };
-
-type InternalEventMap = Map<EventName, EventData>;
-
-function getOrCreateEventData(events: InternalEventMap, eventName: EventName) {
-  let eventData = events.get(eventName);
-  if (!eventData) {
-    eventData = new EventData();
-    events.set(eventName, eventData);
-  }
-  return eventData;
-}
 
 class EventData {
   idMap: Map<EventListenerId, EventListener>;
-  cbMap: Map<EventListener, Set<EventListenerId> | EventListenerId>;
-  onceList: Set<EventListenerId>;
   emitList: EventListener[] | null;
 
   constructor() {
     this.idMap = new Map();
-    this.cbMap = new Map();
-    this.onceList = new Set();
     this.emitList = null;
   }
 
   add(
     listener: EventListener,
-    once: boolean,
     listenerId: EventListenerId,
-    idDedupeMode: EmitterIdDedupeMode,
-    allowDuplicateListeners: boolean,
+    idDedupeMode: EmitterDedupeMode,
   ): EventListenerId {
-    // Handle duplicate listeners.
-    if (!allowDuplicateListeners && this.cbMap.has(listener)) {
-      throw new Error('Emitter: tried to add an existing event listener to an event!');
-    }
-
     // Handle duplicate ids.
     if (this.idMap.has(listenerId)) {
       switch (idDedupeMode) {
-        case EmitterIdDedupeMode.THROW: {
-          throw new Error('Emitter: tried to add an existing event listener id to an event!');
+        case EmitterDedupeMode.THROW: {
+          throw new Error('Eventti: duplicate listener id!');
         }
-        case EmitterIdDedupeMode.IGNORE: {
+        case EmitterDedupeMode.IGNORE: {
           return listenerId;
         }
+        case EmitterDedupeMode.UPDATE: {
+          this.emitList = null;
+          break;
+        }
         default: {
-          this.delId(listenerId, idDedupeMode === EmitterIdDedupeMode.UPDATE);
+          this.del(listenerId);
         }
       }
-    }
-
-    // Store listener to callback map.
-    const cbListenerIds = this.cbMap.get(listener);
-    if (cbListenerIds === undefined) {
-      this.cbMap.set(listener, listenerId);
-    } else if (cbListenerIds instanceof Set) {
-      cbListenerIds.add(listenerId);
-    } else {
-      this.cbMap.set(listener, new Set([cbListenerIds, listenerId]));
     }
 
     // Store listener to id map.
     this.idMap.set(listenerId, listener);
 
-    // Add to once list if needed.
-    if (once) {
-      this.onceList.add(listenerId);
-    }
-
     // Add to emit list if needed. We can safely add new listeners to the
     // end of emit list even if it is currently emitting, but we can't remove
     // items from it while it is emitting.
-    if (this.emitList) {
-      this.emitList.push(listener);
-    }
+    this.emitList?.push(listener);
 
     return listenerId;
   }
 
-  delId(listenerId: EventListenerId, ignoreIdMap = false) {
-    const listener = this.idMap.get(listenerId);
-    if (!listener) return;
-
-    if (!ignoreIdMap) {
-      this.idMap.delete(listenerId);
+  del(listenerId: EventListenerId) {
+    if (this.idMap.delete(listenerId)) {
+      this.emitList = null;
     }
-
-    this.onceList.delete(listenerId);
-
-    const cbListenerIds = this.cbMap.get(listener)!;
-    if (cbListenerIds instanceof Set) {
-      cbListenerIds.delete(listenerId);
-      if (!cbListenerIds.size) {
-        this.cbMap.delete(listener);
-      }
-    } else {
-      this.cbMap.delete(listener);
-    }
-
-    this.emitList = null;
-  }
-
-  delFn(listener: EventListener) {
-    const cbListenerIds = this.cbMap.get(listener);
-    if (cbListenerIds === undefined) return;
-
-    if (cbListenerIds instanceof Set) {
-      for (const listenerId of cbListenerIds) {
-        this.onceList.delete(listenerId);
-        this.idMap.delete(listenerId);
-      }
-    } else {
-      this.onceList.delete(cbListenerIds);
-      this.idMap.delete(cbListenerIds);
-    }
-
-    this.cbMap.delete(listener);
-    this.emitList = null;
   }
 }
 
 export class Emitter<T extends Events> {
-  idDedupeMode: EmitterIdDedupeMode;
-  createId: () => EventListenerId;
-  readonly allowDuplicateListeners: boolean;
-  protected _events: InternalEventMap;
+  dedupeMode: EmitterDedupeMode;
+  createId: (listener: EventListener) => EventListenerId;
+  protected _events: Map<EventName, EventData>;
 
   constructor(options: EmitterOptions = {}) {
-    const { idDedupeMode = EmitterIdDedupeMode.ADD, allowDuplicateListeners = true } = options;
-    this.idDedupeMode = idDedupeMode;
-    this.createId = options.createId || Symbol;
-    this.allowDuplicateListeners = allowDuplicateListeners;
+    const { dedupeMode = EmitterDedupeMode.ADD, createId = () => Symbol() } = options;
+    this.dedupeMode = dedupeMode;
+    this.createId = createId;
     this._events = new Map();
   }
 
   protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null {
+    // Get the listeners for emit process. We could do just a simple
+    // [...idMap.values()] and be done with it, but then we'd be cloning the
+    // listeners always which induces a noticeable performance hit. So what we
+    // want to do instead is to cache the emit list and only invalidate it when
+    // listeners are removed.
     const eventData = this._events.get(eventName);
-    if (!eventData) return null;
-
-    const { idMap, onceList } = eventData;
-
-    // Return early if there are no listeners.
-    if (!idMap.size) return null;
-
-    // Get the listeners for this emit process. If we have cached listeners
-    // in event data (emit list) we use that, and fallback to cloning the
-    // listeners from the id map. The listeners we loop should be just a
-    // simple array for best performance. Cloning the listeners is expensive,
-    // which is why we do it only when absolutely needed.
-    const listeners = eventData.emitList || [...idMap.values()];
-
-    // Delete all once listeners _after_ the clone operation. We don't want
-    // to touch the cloned/cached listeners here, but only the "live" data.
-    if (onceList.size) {
-      // If once list has all the listener ids we can just delete the event
-      // and be done with it.
-      if (onceList.size === idMap.size) {
-        this._events.delete(eventName);
-      }
-      // Otherwise, let's delete the once listeners one by one.
-      else {
-        for (const listenerId of onceList) {
-          eventData.delId(listenerId);
-        }
+    if (eventData) {
+      const { idMap } = eventData;
+      if (idMap.size) {
+        return (eventData.emitList = eventData.emitList || [...idMap.values()]);
       }
     }
-    // In case there are no once listeners we can cache the listeners array.
-    else {
-      eventData.emitList = listeners;
-    }
-
-    return listeners;
+    return null;
   }
 
   on<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = this.createId(),
+    listenerId?: EventListenerId,
   ): EventListenerId {
-    return getOrCreateEventData(this._events, eventName).add(
+    const { _events } = this;
+    let eventData = _events.get(eventName);
+    if (!eventData) {
+      eventData = new EventData();
+      _events.set(eventName, eventData);
+    }
+    return eventData.add(
       listener,
-      false,
-      listenerId,
-      this.idDedupeMode,
-      this.allowDuplicateListeners,
+      listenerId === undefined ? this.createId(listener) : listenerId,
+      this.dedupeMode,
     );
   }
 
   once<EventName extends keyof T>(
     eventName: EventName,
     listener: T[EventName],
-    listenerId: EventListenerId = this.createId(),
+    listenerId?: EventListenerId,
   ): EventListenerId {
-    return getOrCreateEventData(this._events, eventName).add(
-      listener,
-      true,
-      listenerId,
-      this.idDedupeMode,
-      this.allowDuplicateListeners,
+    const _listenerId = listenerId === undefined ? this.createId(listener) : listenerId;
+    let isCalled = false;
+    return this.on(
+      eventName,
+      // @ts-ignore
+      (...args: any[]) => {
+        if (!isCalled) {
+          isCalled = true;
+          this.off(eventName, _listenerId);
+          listener(...args);
+        }
+      },
+      _listenerId,
     );
   }
 
-  off<EventName extends keyof T>(
-    eventName?: EventName,
-    listener?: T[EventName] | EventListenerId,
-  ): void {
+  off<EventName extends keyof T>(eventName?: EventName, listenerId?: EventListenerId): void {
     // If name is undefined, let's remove all listeners from the emitter.
     if (eventName === undefined) {
       this._events.clear();
       return;
     }
 
-    // If listener is undefined, let's remove all listeners linked to the
+    // If listener is undefined, let's remove all listeners of the provided
     // event name.
-    if (listener === undefined) {
+    if (listenerId === undefined) {
       this._events.delete(eventName);
       return;
     }
 
-    // Let's get the event data for the listener.
+    // Get the event data.
     const eventData = this._events.get(eventName);
     if (!eventData) return;
 
-    // If listener is a function let's delete all instances of it from the
-    // event name.
-    if (typeof listener === 'function') {
-      eventData.delFn(listener);
-    }
-    // If the listener is a listener id let's delete the specific listener.
-    else {
-      eventData.delId(listener);
-    }
+    // Remove the listener from the event.
+    eventData.del(listenerId);
 
-    // If the event name doesn't have any listeners left let's delete it.
+    // If the event doesn't have any listeners left we can remove it from
+    // the emitter (to prevent memory leaks).
     if (!eventData.idMap.size) {
       this._events.delete(eventName);
     }
@@ -264,9 +170,9 @@ export class Emitter<T extends Events> {
     const listeners = this._getListeners(eventName);
     if (!listeners) return;
 
-    // Execute the current event listeners. Basic for loop for the win. Here
-    // it's important to cache the listeners' length as the listeners array may
-    // grow during execution (but not shrink).
+    // Call the current event listeners. Basic for loop for the win. Here it's
+    // important to cache the listeners' length as the array may grow during
+    // looping (but not shrink).
     let i = 0;
     let l = listeners.length;
     for (; i < l; i++) {
