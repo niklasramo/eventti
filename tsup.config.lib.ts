@@ -5,7 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   outDir: './dist',
-  format: ['esm', 'cjs', 'iife'],
+  format: ['esm', 'cjs'],
   minify: true,
   dts: true,
   globalName: 'eventti',
