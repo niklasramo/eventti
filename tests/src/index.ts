@@ -22,38 +22,51 @@ describe('event name', () => {
 });
 
 describe('listener id', () => {
-  it(`should be allowed to be any value except undefined or null`, () => {
-    ['', 'foo', 0, 1, -1, Infinity, -Infinity, Symbol(), true, false, [], {}, () => {}].forEach(
-      (listenerId) => {
-        const emitter = new Emitter();
-        let counter = 0;
+  it(`should be allowed to be any value except undefined`, () => {
+    [
+      null,
+      '',
+      'foo',
+      0,
+      1,
+      -1,
+      Infinity,
+      -Infinity,
+      Symbol(),
+      true,
+      false,
+      [],
+      {},
+      () => {},
+    ].forEach((listenerId) => {
+      const emitter = new Emitter();
+      let counter = 0;
 
-        emitter.once(
-          'test',
-          () => {
-            ++counter;
-          },
-          listenerId,
-        );
-        assert.equal(emitter.listenerCount(), 1);
-        emitter.emit('test');
-        assert.equal(emitter.listenerCount(), 0);
-        assert.equal(counter, 1);
+      emitter.once(
+        'test',
+        () => {
+          ++counter;
+        },
+        listenerId,
+      );
+      assert.equal(emitter.listenerCount(), 1);
+      emitter.emit('test');
+      assert.equal(emitter.listenerCount(), 0);
+      assert.equal(counter, 1);
 
-        emitter.on(
-          'test',
-          () => {
-            ++counter;
-          },
-          listenerId,
-        );
-        emitter.emit('test');
-        assert.equal(emitter.listenerCount(), 1);
-        assert.equal(counter, 2);
-        emitter.off('test', listenerId);
-        assert.equal(emitter.listenerCount(), 0);
-      },
-    );
+      emitter.on(
+        'test',
+        () => {
+          ++counter;
+        },
+        listenerId,
+      );
+      emitter.emit('test');
+      assert.equal(emitter.listenerCount(), 1);
+      assert.equal(counter, 2);
+      emitter.off('test', listenerId);
+      assert.equal(emitter.listenerCount(), 0);
+    });
   });
 });
 

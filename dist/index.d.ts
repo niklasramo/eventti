@@ -1,6 +1,6 @@
 type EventName = string | number | symbol;
 type EventListener = (...data: any) => any;
-type EventListenerId = string | number | symbol | bigint | Function | Object;
+type EventListenerId = null | string | number | symbol | bigint | Function | Object;
 type Events = Record<EventName, EventListener>;
 declare const EmitterDedupe: {
     readonly ADD: "add";

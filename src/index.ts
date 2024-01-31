@@ -2,7 +2,7 @@ export type EventName = string | number | symbol;
 
 export type EventListener = (...data: any) => any;
 
-export type EventListenerId = string | number | symbol | bigint | Function | Object;
+export type EventListenerId = null | string | number | symbol | bigint | Function | Object;
 
 export type Events = Record<EventName, EventListener>;
 

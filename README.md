@@ -271,7 +271,7 @@ emitter.on('a', listener); // throws an error
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
   - Optional. Defaults to `"add"` if omitted.
-- **getId** &nbsp;&mdash;&nbsp; `(listener) => string | number | symbol | bigint | Function | Object`
+- **getId** &nbsp;&mdash;&nbsp; `(listener) => null | string | number | symbol | bigint | Function | Object`
   - A function which is used to get the listener id for a listener callback. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else. Receives the listener callback as the first (and only) argument.
   - Optional. Defaults to `() => Symbol()` if omitted.
 
@@ -330,7 +330,7 @@ emitter.on( eventName, listener, [ listenerId ] )
 - **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
 - **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
   - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; `string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
+- **listenerId** &nbsp;&mdash;&nbsp; `null | string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
   - Optionally you can provide the listener id manually.
 
 **Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
@@ -354,7 +354,7 @@ const id1 = emitter.on('test', a);
 const id2 = emitter.on('test', b);
 
 // Here we bind a and b listeners agains to "test" event, but we provide the
-// listener id manually (can be a string, a number or a symbol).
+// listener id manually.
 const id3 = emitter.on('test', a, 'foo');
 const id4 = emitter.on('test', b, 'bar');
 id3 === 'foo'; // => true
@@ -392,7 +392,7 @@ emitter.once( eventName, listener, [ listenerId ] )
 - **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
 - **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
   - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; `string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
+- **listenerId** &nbsp;&mdash;&nbsp; `null | string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
   - Optionally you can provide the listener id manually.
 
 **Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
