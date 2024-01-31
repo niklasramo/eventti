@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { Emitter } from '../../src/index.js';
+import { Emitter, EmitterDedupe } from '../../src/index.js';
 
 describe('event name', () => {
   it(`should be allowed to be a string, number or symbol`, () => {
@@ -58,7 +58,7 @@ describe('listener id', () => {
 });
 
 describe('constructor options', () => {
-  describe('createId', () => {
+  describe('getId', () => {
     it(`should default to creating a new Symbol if omitted`, () => {
       const emitter = new Emitter();
       const idA = emitter.on('test', () => {});
@@ -70,7 +70,7 @@ describe('constructor options', () => {
 
     it(`should be a function that generates a new listener id`, () => {
       let id = 0;
-      const emitter = new Emitter({ createId: () => ++id });
+      const emitter = new Emitter({ getId: () => ++id });
 
       const idA = emitter.on('test', () => {});
       assert.equal(idA, id);
@@ -81,7 +81,7 @@ describe('constructor options', () => {
 
     it(`should receive the listener callback as it's only argument`, () => {
       const emitter = new Emitter({
-        createId: (...args) => {
+        getId: (...args) => {
           assert.equal(args.length, 1);
           return args[0];
         },
@@ -95,7 +95,7 @@ describe('constructor options', () => {
     });
   });
 
-  describe('dedupeMode', () => {
+  describe('dedupe', () => {
     it(`should default to "add" if omitted`, () => {
       const emitter = new Emitter();
       let result = '';
@@ -108,7 +108,7 @@ describe('constructor options', () => {
 
     describe('add', () => {
       it(`should add the duplicate listener to the end of the queue`, () => {
-        const emitter = new Emitter({ dedupeMode: 'add' });
+        const emitter = new Emitter({ dedupe: EmitterDedupe.ADD });
         let result = '';
         emitter.on('test', () => void (result += '1'), 'foo');
         emitter.on('test', () => void (result += '2'));
@@ -120,7 +120,7 @@ describe('constructor options', () => {
 
     describe('update', () => {
       it(`should update the existing listener with the new listener`, () => {
-        const emitter = new Emitter({ dedupeMode: 'update' });
+        const emitter = new Emitter({ dedupe: EmitterDedupe.UPDATE });
         let result = '';
         emitter.on('test', () => void (result += '1'), 'foo');
         emitter.on('test', () => void (result += '2'));
@@ -132,7 +132,7 @@ describe('constructor options', () => {
 
     describe('ignore', () => {
       it(`should ignore the duplicate listener`, () => {
-        const emitter = new Emitter({ dedupeMode: 'ignore' });
+        const emitter = new Emitter({ dedupe: EmitterDedupe.IGNORE });
         let result = 0;
         emitter.on('test', () => void (result = 1), 'foo');
         emitter.on('test', () => void (result = 2), 'foo');
@@ -143,7 +143,7 @@ describe('constructor options', () => {
 
     describe('throw', () => {
       it(`should throw an error`, () => {
-        const emitter = new Emitter({ dedupeMode: 'throw' });
+        const emitter = new Emitter({ dedupe: EmitterDedupe.THROW });
         emitter.on('test', () => {}, 'foo');
         assert.throws(() => emitter.on('test', () => {}, 'foo'));
       });

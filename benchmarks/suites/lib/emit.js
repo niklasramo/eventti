@@ -1,22 +1,19 @@
 #!/usr/bin/env node
-
-import Benchmark from 'benchmark';
+import { createSuite } from '../../utils/create-suite.js';
 import { createEmitters } from '../../utils/create-emitters.js';
-import { logResult } from '../../utils/log-result.js';
 
 // Create test suite.
-export const suite = new Benchmark.Suite('Emit');
+export const suite = createSuite('Emit');
 
 // Create emitters.
-const { emitters, emitterNames, resetEmitters } = createEmitters();
+const { emitters, resetEmitters } = createEmitters();
 
 // Store counters for emit tests, used to prevent dead code elimination.
 const counters = Array(100).fill(0);
 let counterIndex = -1;
 
-[1, 10, 100, 1000].forEach((listenerCount) => {
-  emitters.forEach((emitter) => {
-    const emitterName = emitterNames.get(emitter);
+[1, 11, 101, 1001].forEach((listenerCount) => {
+  emitters.forEach((emitter, emitterName) => {
     const eventName = `${listenerCount}-no-args`;
     const ci = ++counterIndex;
 
@@ -26,15 +23,16 @@ let counterIndex = -1;
       });
     }
 
+    emitter.emit(eventName);
+
     suite.add(`${emitterName}:Emit ${listenerCount} listeners without args`, () => {
       emitter.emit(eventName);
     });
   });
 });
 
-[1, 10, 100, 1000].forEach((listenerCount) => {
-  emitters.forEach((emitter) => {
-    const emitterName = emitterNames.get(emitter);
+[1, 11, 101, 1001].forEach((listenerCount) => {
+  emitters.forEach((emitter, emitterName) => {
     const eventName = `${listenerCount}-5-args`;
     const ci = ++counterIndex;
 
@@ -50,10 +48,4 @@ let counterIndex = -1;
   });
 });
 
-suite.on('cycle', logResult).on('error', (event) => {
-  console.error(event.target.error.toString());
-});
-
-suite.on('complete', () => {
-  resetEmitters();
-});
+suite.on('complete', resetEmitters);

@@ -6,87 +6,39 @@ export type EventListenerId = string | number | symbol | bigint | Function | Obj
 
 export type Events = Record<EventName, EventListener>;
 
-export const EmitterDedupeMode = {
+export const EmitterDedupe = {
   ADD: 'add',
   UPDATE: 'update',
   IGNORE: 'ignore',
   THROW: 'throw',
 } as const;
 
-export type EmitterDedupeMode = (typeof EmitterDedupeMode)[keyof typeof EmitterDedupeMode];
+export type EmitterDedupe = (typeof EmitterDedupe)[keyof typeof EmitterDedupe];
 
 export type EmitterOptions = {
-  dedupeMode?: EmitterDedupeMode;
-  createId?: (listener: EventListener) => EventListenerId;
+  dedupe?: EmitterDedupe;
+  getId?: (listener: EventListener) => EventListenerId;
 };
 
-class EventData {
-  idMap: Map<EventListenerId, EventListener>;
-  emitList: EventListener[] | null;
-
-  constructor() {
-    this.idMap = new Map();
-    this.emitList = null;
-  }
-
-  add(
-    listener: EventListener,
-    listenerId: EventListenerId,
-    idDedupeMode: EmitterDedupeMode,
-  ): EventListenerId {
-    // Handle duplicate ids.
-    if (this.idMap.has(listenerId)) {
-      switch (idDedupeMode) {
-        case EmitterDedupeMode.THROW: {
-          throw new Error('Eventti: duplicate listener id!');
-        }
-        case EmitterDedupeMode.IGNORE: {
-          return listenerId;
-        }
-        case EmitterDedupeMode.UPDATE: {
-          this.emitList = null;
-          break;
-        }
-        default: {
-          this.del(listenerId);
-        }
-      }
-    }
-
-    // Store listener to id map.
-    this.idMap.set(listenerId, listener);
-
-    // Add to emit list if needed. We can safely add new listeners to the
-    // end of emit list even if it is currently emitting, but we can't remove
-    // items from it while it is emitting.
-    this.emitList?.push(listener);
-
-    return listenerId;
-  }
-
-  del(listenerId: EventListenerId) {
-    if (this.idMap.delete(listenerId)) {
-      this.emitList = null;
-    }
-  }
-}
-
 export class Emitter<T extends Events> {
-  dedupeMode: EmitterDedupeMode;
-  createId: (listener: EventListener) => EventListenerId;
-  protected _events: Map<EventName, EventData>;
+  dedupe: EmitterDedupe;
+  getId: (listener: EventListener) => EventListenerId;
+  protected _events: Map<
+    EventName,
+    { idMap: Map<EventListenerId, EventListener>; emitList: EventListener[] | null }
+  >;
 
   constructor(options: EmitterOptions = {}) {
-    const { dedupeMode = EmitterDedupeMode.ADD, createId = () => Symbol() } = options;
-    this.dedupeMode = dedupeMode;
-    this.createId = createId;
+    const { dedupe = EmitterDedupe.ADD, getId = () => Symbol() } = options;
+    this.dedupe = dedupe;
+    this.getId = getId;
     this._events = new Map();
   }
 
   protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null {
     // Get the listeners for emit process. We could do just a simple
     // [...idMap.values()] and be done with it, but then we'd be cloning the
-    // listeners always which induces a noticeable performance hit. So what we
+    // listeners always which adds a noticeable performance hit. So what we
     // want to do instead is to cache the emit list and only invalidate it when
     // listeners are removed.
     const eventData = this._events.get(eventName);
@@ -104,17 +56,49 @@ export class Emitter<T extends Events> {
     listener: T[EventName],
     listenerId?: EventListenerId,
   ): EventListenerId {
+    // Get or create the event data.
     const { _events } = this;
     let eventData = _events.get(eventName);
     if (!eventData) {
-      eventData = new EventData();
+      eventData = { idMap: new Map(), emitList: null };
       _events.set(eventName, eventData);
     }
-    return eventData.add(
-      listener,
-      listenerId === undefined ? this.createId(listener) : listenerId,
-      this.dedupeMode,
-    );
+
+    // Get the id map and emit list.
+    const { idMap, emitList } = eventData;
+
+    // Create listener id if not provided.
+    listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
+
+    // Handle duplicate ids.
+    if (idMap.has(listenerId)) {
+      switch (this.dedupe) {
+        case EmitterDedupe.THROW: {
+          throw new Error('Eventti: duplicate listener id!');
+        }
+        case EmitterDedupe.IGNORE: {
+          return listenerId;
+        }
+        case EmitterDedupe.UPDATE: {
+          eventData.emitList = null;
+          break;
+        }
+        default: {
+          idMap.delete(listenerId);
+          eventData.emitList = null;
+        }
+      }
+    }
+
+    // Store listener to id map.
+    idMap.set(listenerId, listener);
+
+    // Add to emit list if needed. We can safely add new listeners to the
+    // end of emit list even if it is currently emitting, but we can't remove
+    // items from it while it is emitting.
+    emitList?.push(listener);
+
+    return listenerId;
   }
 
   once<EventName extends keyof T>(
@@ -122,31 +106,32 @@ export class Emitter<T extends Events> {
     listener: T[EventName],
     listenerId?: EventListenerId,
   ): EventListenerId {
-    const _listenerId = listenerId === undefined ? this.createId(listener) : listenerId;
     let isCalled = false;
+    listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
     return this.on(
       eventName,
       // @ts-ignore
       (...args: any[]) => {
         if (!isCalled) {
           isCalled = true;
-          this.off(eventName, _listenerId);
+          this.off(eventName, listenerId);
           listener(...args);
         }
       },
-      _listenerId,
+      listenerId,
     );
   }
 
   off<EventName extends keyof T>(eventName?: EventName, listenerId?: EventListenerId): void {
-    // If name is undefined, let's remove all listeners from the emitter.
+    // If event name is not provided, let's remove all listeners from the
+    // emitter.
     if (eventName === undefined) {
       this._events.clear();
       return;
     }
 
-    // If listener is undefined, let's remove all listeners of the provided
-    // event name.
+    // If listener id is not provided, let's remove all listeners from the
+    // event.
     if (listenerId === undefined) {
       this._events.delete(eventName);
       return;
@@ -157,12 +142,15 @@ export class Emitter<T extends Events> {
     if (!eventData) return;
 
     // Remove the listener from the event.
-    eventData.del(listenerId);
+    if (eventData.idMap.delete(listenerId)) {
+      // Invalidate the emit list.
+      eventData.emitList = null;
 
-    // If the event doesn't have any listeners left we can remove it from
-    // the emitter (to prevent memory leaks).
-    if (!eventData.idMap.size) {
-      this._events.delete(eventName);
+      // If the event doesn't have any listeners left we can remove it from
+      // the emitter (to prevent memory leaks).
+      if (!eventData.idMap.size) {
+        this._events.delete(eventName);
+      }
     }
   }
 
@@ -170,13 +158,28 @@ export class Emitter<T extends Events> {
     const listeners = this._getListeners(eventName);
     if (!listeners) return;
 
-    // Call the current event listeners. Basic for loop for the win. Here it's
-    // important to cache the listeners' length as the array may grow during
-    // looping (but not shrink).
-    let i = 0;
-    let l = listeners.length;
-    for (; i < l; i++) {
-      listeners[i](...(args as any[]));
+    // Here we optimize the emit process by avoiding the spread operator when
+    // there are no arguments. This is a micro optimization, but it does make
+    // a difference. Also, avoid the for loop when there is only one listener.
+    const { length } = listeners;
+    if (args.length) {
+      if (length === 1) {
+        listeners[0](...(args as any[]));
+      } else {
+        let i = 0;
+        for (; i < length; i++) {
+          listeners[i](...(args as any[]));
+        }
+      }
+    } else {
+      if (length === 1) {
+        listeners[0]();
+      } else {
+        let i = 0;
+        for (; i < length; i++) {
+          listeners[i]();
+        }
+      }
     }
   }
 

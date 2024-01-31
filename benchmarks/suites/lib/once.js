@@ -1,22 +1,19 @@
 #!/usr/bin/env node
-
-import Benchmark from 'benchmark';
+import { createSuite } from '../../utils/create-suite.js';
 import { createEmitters } from '../../utils/create-emitters.js';
-import { logResult } from '../../utils/log-result.js';
 
 // Create test suite.
-export const suite = new Benchmark.Suite('Once');
+export const suite = createSuite('Once');
 
 // Create emitters.
-const { emitters, emitterNames, resetEmitters } = createEmitters();
+const { emitters, resetEmitters } = createEmitters();
 
 // Store counters for emit tests, used to prevent dead code elimination.
 const counters = Array(100).fill(0);
 let counterIndex = -1;
 
 [1, 10, 100, 1000].forEach((listenerCount) => {
-  emitters.forEach((emitter) => {
-    const emitterName = emitterNames.get(emitter);
+  emitters.forEach((emitter, emitterName) => {
     const eventName = `test-${listenerCount}`;
     const ci = ++counterIndex;
 
@@ -45,6 +42,8 @@ let counterIndex = -1;
         };
         break;
       }
+      case 'tseep':
+      case 'eventemitter2':
       case 'eventemitter3':
       case 'node': {
         suiteCallback = () => {
@@ -64,8 +63,7 @@ let counterIndex = -1;
 });
 
 [1, 10, 100, 1000].forEach((listenerCount) => {
-  emitters.forEach((emitter) => {
-    const emitterName = emitterNames.get(emitter);
+  emitters.forEach((emitter, emitterName) => {
     const eventName = `test-${listenerCount}`;
     const ci = ++counterIndex;
 
@@ -80,10 +78,4 @@ let counterIndex = -1;
   });
 });
 
-suite.on('cycle', logResult).on('error', (event) => {
-  console.error(event.target.error.toString());
-});
-
-suite.on('complete', () => {
-  resetEmitters();
-});
+suite.on('complete', resetEmitters);

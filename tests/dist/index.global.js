@@ -4231,50 +4231,17 @@
   var core = import_index.default.core;
 
   // src/index.ts
-  var EmitterDedupeMode = {
+  var EmitterDedupe = {
     ADD: "add",
     UPDATE: "update",
     IGNORE: "ignore",
     THROW: "throw"
   };
-  var EventData = class {
-    constructor() {
-      this.idMap = /* @__PURE__ */ new Map();
-      this.emitList = null;
-    }
-    add(listener, listenerId, idDedupeMode) {
-      if (this.idMap.has(listenerId)) {
-        switch (idDedupeMode) {
-          case EmitterDedupeMode.THROW: {
-            throw new Error("Eventti: duplicate listener id!");
-          }
-          case EmitterDedupeMode.IGNORE: {
-            return listenerId;
-          }
-          case EmitterDedupeMode.UPDATE: {
-            this.emitList = null;
-            break;
-          }
-          default: {
-            this.del(listenerId);
-          }
-        }
-      }
-      this.idMap.set(listenerId, listener);
-      this.emitList?.push(listener);
-      return listenerId;
-    }
-    del(listenerId) {
-      if (this.idMap.delete(listenerId)) {
-        this.emitList = null;
-      }
-    }
-  };
   var Emitter = class {
     constructor(options = {}) {
-      const { dedupeMode = EmitterDedupeMode.ADD, createId = () => Symbol() } = options;
-      this.dedupeMode = dedupeMode;
-      this.createId = createId;
+      const { dedupe = EmitterDedupe.ADD, getId = () => Symbol() } = options;
+      this.dedupe = dedupe;
+      this.getId = getId;
       this._events = /* @__PURE__ */ new Map();
     }
     _getListeners(eventName) {
@@ -4291,29 +4258,47 @@
       const { _events } = this;
       let eventData = _events.get(eventName);
       if (!eventData) {
-        eventData = new EventData();
+        eventData = { idMap: /* @__PURE__ */ new Map(), emitList: null };
         _events.set(eventName, eventData);
       }
-      return eventData.add(
-        listener,
-        listenerId === void 0 ? this.createId(listener) : listenerId,
-        this.dedupeMode
-      );
+      const { idMap, emitList } = eventData;
+      listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
+      if (idMap.has(listenerId)) {
+        switch (this.dedupe) {
+          case EmitterDedupe.THROW: {
+            throw new Error("Eventti: duplicate listener id!");
+          }
+          case EmitterDedupe.IGNORE: {
+            return listenerId;
+          }
+          case EmitterDedupe.UPDATE: {
+            eventData.emitList = null;
+            break;
+          }
+          default: {
+            idMap.delete(listenerId);
+            eventData.emitList = null;
+          }
+        }
+      }
+      idMap.set(listenerId, listener);
+      emitList?.push(listener);
+      return listenerId;
     }
     once(eventName, listener, listenerId) {
-      const _listenerId = listenerId === void 0 ? this.createId(listener) : listenerId;
       let isCalled = false;
+      listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
       return this.on(
         eventName,
         // @ts-ignore
         (...args) => {
           if (!isCalled) {
             isCalled = true;
-            this.off(eventName, _listenerId);
+            this.off(eventName, listenerId);
             listener(...args);
           }
         },
-        _listenerId
+        listenerId
       );
     }
     off(eventName, listenerId) {
@@ -4328,19 +4313,36 @@
       const eventData = this._events.get(eventName);
       if (!eventData)
         return;
-      eventData.del(listenerId);
-      if (!eventData.idMap.size) {
-        this._events.delete(eventName);
+      if (eventData.idMap.delete(listenerId)) {
+        eventData.emitList = null;
+        if (!eventData.idMap.size) {
+          this._events.delete(eventName);
+        }
       }
     }
     emit(eventName, ...args) {
       const listeners = this._getListeners(eventName);
       if (!listeners)
         return;
-      let i = 0;
-      let l = listeners.length;
-      for (; i < l; i++) {
-        listeners[i](...args);
+      const { length } = listeners;
+      if (args.length) {
+        if (length === 1) {
+          listeners[0](...args);
+        } else {
+          let i = 0;
+          for (; i < length; i++) {
+            listeners[i](...args);
+          }
+        }
+      } else {
+        if (length === 1) {
+          listeners[0]();
+        } else {
+          let i = 0;
+          for (; i < length; i++) {
+            listeners[i]();
+          }
+        }
       }
     }
     listenerCount(eventName) {
@@ -4410,7 +4412,7 @@
     });
   });
   describe("constructor options", () => {
-    describe("createId", () => {
+    describe("getId", () => {
       it(`should default to creating a new Symbol if omitted`, () => {
         const emitter = new Emitter();
         const idA = emitter.on("test", () => {
@@ -4423,7 +4425,7 @@
       });
       it(`should be a function that generates a new listener id`, () => {
         let id = 0;
-        const emitter = new Emitter({ createId: () => ++id });
+        const emitter = new Emitter({ getId: () => ++id });
         const idA = emitter.on("test", () => {
         });
         assert.equal(idA, id);
@@ -4433,7 +4435,7 @@
       });
       it(`should receive the listener callback as it's only argument`, () => {
         const emitter = new Emitter({
-          createId: (...args) => {
+          getId: (...args) => {
             assert.equal(args.length, 1);
             return args[0];
           }
@@ -4446,7 +4448,7 @@
         assert.equal(emitter.once("test", listenerB), listenerB);
       });
     });
-    describe("dedupeMode", () => {
+    describe("dedupe", () => {
       it(`should default to "add" if omitted`, () => {
         const emitter = new Emitter();
         let result = "";
@@ -4458,7 +4460,7 @@
       });
       describe("add", () => {
         it(`should add the duplicate listener to the end of the queue`, () => {
-          const emitter = new Emitter({ dedupeMode: "add" });
+          const emitter = new Emitter({ dedupe: EmitterDedupe.ADD });
           let result = "";
           emitter.on("test", () => void (result += "1"), "foo");
           emitter.on("test", () => void (result += "2"));
@@ -4469,7 +4471,7 @@
       });
       describe("update", () => {
         it(`should update the existing listener with the new listener`, () => {
-          const emitter = new Emitter({ dedupeMode: "update" });
+          const emitter = new Emitter({ dedupe: EmitterDedupe.UPDATE });
           let result = "";
           emitter.on("test", () => void (result += "1"), "foo");
           emitter.on("test", () => void (result += "2"));
@@ -4480,7 +4482,7 @@
       });
       describe("ignore", () => {
         it(`should ignore the duplicate listener`, () => {
-          const emitter = new Emitter({ dedupeMode: "ignore" });
+          const emitter = new Emitter({ dedupe: EmitterDedupe.IGNORE });
           let result = 0;
           emitter.on("test", () => void (result = 1), "foo");
           emitter.on("test", () => void (result = 2), "foo");
@@ -4490,7 +4492,7 @@
       });
       describe("throw", () => {
         it(`should throw an error`, () => {
-          const emitter = new Emitter({ dedupeMode: "throw" });
+          const emitter = new Emitter({ dedupe: EmitterDedupe.THROW });
           emitter.on("test", () => {
           }, "foo");
           assert.throws(() => emitter.on("test", () => {

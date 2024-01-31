@@ -43,10 +43,10 @@ eventti.off('test', id3); // ✅
 eventti.emit('test'); // counter === 400
 ```
 
-Additionally, you can provide the listener id manually _and_ define strategy for handling duplicate ids. This is especially useful when you want to update an existing listener with a new one, but keep the listener at the same index in the listener queue.
+Additionally, you can provide the listener id manually _and_ define strategy for handling duplicate ids. This is especially useful when you want to update an existing listener with a new one _without changing it's index in the listener queue_.
 
 ```ts
-const eventti = new Emitter({ dedupeMode: 'update' });
+const eventti = new Emitter({ dedupe: 'update' });
 eventti.on('test', () => console.log('foo'), 'idA');
 eventti.on('test', () => console.log('bar'), 'idB');
 // Update the listener for idA.
@@ -121,31 +121,43 @@ const emitter = new Emitter<Events>();
 const idA = emitter.on('a', (msg) => console.log(msg));
 const idB = emitter.on('b', (...args) => console.log(...args));
 
+// Add a one-off listener to an event.
+emitter.once('a', (msg) => console.log('once: ' + msg));
+
 // Emit events.
+emitter.emit('a', 'foo');
+// -> foo
+// -> once: foo
 emitter.emit('a', 'foo');
 // -> foo
 emitter.emit('b', 'bar', 5000);
 // -> bar 5000
+
+// Count event listeners.
+emitter.listenerCount('a'); // -> 1
+
+// Count all listeners.
+emitter.listenerCount(); // -> 2
 
 // Remove listeners.
 emitter.off('a', idA);
 emitter.off('b', idB);
 ```
 
-### Listener ids and dedupe mode
+### Listener ids and dedupe modes
 
 The founding feature of Eventti is that every listener is assigned with a unique id. The id can be any value except `null` or `undefined`. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else _and_ you can also provide the id manually via `.on()` and `.once()` methods.
 
 Now the question is, what should happen when you try to add a listener with an id that already exists? Well, it's up to you and Eventti allows you to choose from four different options what the behaviour should be.
 
-#### dedupeMode: "add"
+#### dedupe: "add"
 
-When the dedupeMode mode is set to "add" (which it is by default) the existing listener (matching the id) will be first completely removed and then the new listener will be appended to the listener queue.
+When the dedupe is set to "add" (which it is by default) the existing listener (matching the id) will be first completely removed and then the new listener will be appended to the listener queue.
 
 ```ts
-import { Emitter } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
-const emitter = new Emitter({ dedupeMode: 'add' });
+const emitter = new Emitter({ dedupe: EmitterDedupe.ADD });
 
 emitter.on('a', () => console.log('foo 1'), 'foo');
 emitter.on('a', () => console.log('bar'), 'bar');
@@ -156,14 +168,14 @@ emitter.emit('a');
 // -> foo 2
 ```
 
-#### dedupeMode: "update"
+#### dedupe: "update"
 
-When the dedupeMode mode is set to "update" the existing listener (matching the id) will be replaced with new listener while keeping the listener at the same index in the listener queue.
+When the dedupe is set to "update" the existing listener (matching the id) will be replaced with new listener while keeping the listener at the same index in the listener queue.
 
 ```ts
-import { Emitter } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
-const emitter = new Emitter({ dedupeMode: 'update' });
+const emitter = new Emitter({ dedupe: EmitterDedupe.UPDATE });
 
 emitter.on('a', () => console.log('foo 1'), 'foo');
 emitter.on('a', () => console.log('bar'), 'bar');
@@ -174,14 +186,14 @@ emitter.emit('a');
 // -> bar
 ```
 
-#### dedupeMode: "ignore"
+#### dedupe: "ignore"
 
-When the dedupeMode mode is set to "ignore" the new listener is simply ignored.
+When the dedupe is set to "ignore" the new listener is simply ignored.
 
 ```ts
-import { Emitter } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
-const emitter = new Emitter({ dedupeMode: 'ignore' });
+const emitter = new Emitter({ dedupe: EmitterDedupe.IGNORE });
 
 emitter.on('a', () => console.log('foo 1'), 'foo');
 emitter.on('a', () => console.log('bar'), 'bar');
@@ -192,14 +204,14 @@ emitter.emit('a');
 // -> bar
 ```
 
-#### dedupeMode: "throw"
+#### dedupe: "throw"
 
-When the dedupeMode mode is set to "throw" an error is thrown.
+When the dedupe is set to "throw" an error is thrown.
 
 ```ts
-import { Emitter } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
-const emitter = new Emitter({ dedupeMode: 'throw' });
+const emitter = new Emitter({ dedupe: EmitterDedupe.THROW });
 
 emitter.on('a', () => console.log('foo 1'), 'foo');
 emitter.on('a', () => console.log('bar'), 'bar');
@@ -208,27 +220,30 @@ emitter.on('a', () => console.log('foo 2'), 'foo'); // throws an error
 
 #### Changing dedupe mode
 
-You can change the `dedupeMode` mode at any point after instantiaiting the emitter. Just directly set the mode via emitter's `dedupeMode` property.
+You can change the `dedupe` mode at any point after instantiaiting the emitter. Just directly set the mode via emitter's `dedupe` property.
 
 ```ts
-import { Emitter, EmitterDedupeMode } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
 const emitter = new Emitter();
 
-emitter.dedupeMode = EmitterDedupeMode.THROW;
+emitter.dedupe = EmitterDedupe.THROW;
 ```
 
-### Preventing duplicate listeners
+### Mimicking the _classic_ event emitter API
 
-Eventti's `Emitter` allows duplicate listeners by default (as do most event emitter implementations), but you can configure it to use the listener callback as the listener id by default and then decide (with `dedupeMode`) what you want to happen when a duplicate listener is detected.
+Eventti's API is a bit different from most other event emitters, but you can easily mimic the classic API (where you remove listeners based on the callback) by using the `getId` option. This way you can use the listener callback as the listener id by default and remove listeners based on the callback. But do note that this way duplicate listeners can't be added, which may or may not be what you want.
 
 ```ts
 import { Emitter } from 'eventti';
 
 const emitter = new Emitter({
-  dedupeMode: 'throw',
-  createId: (listener) => listener,
+  // Decide what to do with duplicate listeners by default.
+  dedupe: 'throw',
+  // Use the listener callback as the listener id.
+  getId: (listener) => listener,
 });
+
 const listener = () => {};
 
 // Now the listener callback is used as
@@ -249,19 +264,19 @@ emitter.on('a', listener); // throws an error
 
 `Emitter` is a class which's constructor accepts an optional configuration object with the following properties:
 
-- **dedupeMode** &nbsp;&mdash;&nbsp; `"add" | "update" | "ignore" | "throw"`∫
+- **dedupe** &nbsp;&mdash;&nbsp; `"add" | "update" | "ignore" | "throw"`∫
   - Defines how a duplicate event listener id is handled.
     - `"add"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
     - `"update"`: the existing listener (of the id) is replaced with the new listener without changing the index of the listener in the event's listener queue.
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
   - Optional. Defaults to `"add"` if omitted.
-- **createId** &nbsp;&mdash;&nbsp; `(listener) => string | number | symbol | bigint | Function | Object`
-  - A function which is used to create listener ids. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else. Receives the listener callback as the first (and only) argument.
+- **getId** &nbsp;&mdash;&nbsp; `(listener) => string | number | symbol | bigint | Function | Object`
+  - A function which is used to get the listener id for a listener callback. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else. Receives the listener callback as the first (and only) argument.
   - Optional. Defaults to `() => Symbol()` if omitted.
 
 ```ts
-import { Emitter, EmitterDedupeMode } from 'eventti';
+import { Emitter, EmitterDedupe } from 'eventti';
 
 // Define emitter's events (if using TypeScript).
 // Let the key be the event name and the value
@@ -275,21 +290,21 @@ type Events = {
 const emitterA = new Emitter<Events>();
 
 // Create emitter instance with options.
-let _id = 0;
+let _id = Number.MIN_SAFE_INTEGER;
 const emitterB = new Emitter<Events>({
-  dedupeMode: EmitterDedupeMode.THROW,
-  createId: () => ++_id,
+  dedupe: EmitterDedupe.THROW,
+  getId: () => ++_id,
 });
 
-// You can read and modify the `dedupeMode` setting
+// You can read and modify the `dedupe` setting
 // freely. It's okay to change it's value whenever
 // you want.
-emitterB.dedupeMode; // -> "throw"
-emitterB.dedupeMode = EmitterDedupeMode.IGNORE;
+emitterB.dedupe; // -> "throw"
+emitterB.dedupe = EmitterDedupe.IGNORE;
 
-// You can read and modify the `createId` setting freely.
+// You can read and modify the `getId` setting freely.
 // It's okay to change it's value whenever you want.
-emitterB.createId = () => Symbol();
+emitterB.getId = () => Symbol();
 ```
 
 **Methods**

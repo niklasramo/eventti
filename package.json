@@ -57,6 +57,7 @@
     "benchmark": "2.1.4",
     "chai": "4.4.1",
     "dotenv": "16.3.1",
+    "eventemitter2": "6.4.9",
     "eventemitter3": "5.0.1",
     "eventti3": "git://github.com/niklasramo/eventti.git#3.0.0",
     "karma": "6.4.2",
@@ -68,6 +69,7 @@
     "prettier": "3.2.4",
     "rimraf": "5.0.5",
     "size-limit": "11.0.2",
+    "tseep": "1.2.0",
     "tsup": "8.0.1",
     "typescript": "5.3.3"
   }
