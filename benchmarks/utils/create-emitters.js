@@ -1,5 +1,6 @@
 import EventEmitter from 'node:events';
 import { createNanoEvents as createNanoEmitter } from 'nanoevents';
+import mitt from 'mitt';
 import { EventEmitter as TseepEmitter } from 'tseep';
 import EventEmitter2 from 'eventemitter2';
 import EventEmitter3 from 'eventemitter3';
@@ -58,6 +59,31 @@ const EMITTER_MAP = new Map([
       },
       destroy: (emitter) => {
         emitter.events = {};
+      },
+    },
+  ],
+  [
+    'mitt',
+    {
+      create: () => {
+        const emitter = mitt();
+
+        // Add once method to nanoevents emitter (as instructed in nanoevents README).
+        emitter.once = (event, callback) => {
+          let isCalled = false;
+          const onceCallback = (data) => {
+            if (isCalled) return;
+            isCalled = true;
+            emitter.off(event, onceCallback);
+            callback(data);
+          };
+          return emitter.on(event, onceCallback);
+        };
+
+        return emitter;
+      },
+      destroy: (emitter) => {
+        emitter.all.clear();
       },
     },
   ],

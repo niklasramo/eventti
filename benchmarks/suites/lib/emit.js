@@ -3,7 +3,7 @@ import { createSuite } from '../../utils/create-suite.js';
 import { createEmitters } from '../../utils/create-emitters.js';
 
 // Create test suite.
-export const suite = createSuite('Emit');
+export const suite = createSuite('emit');
 
 // Create emitters.
 const { emitters, resetEmitters } = createEmitters();
@@ -12,7 +12,7 @@ const { emitters, resetEmitters } = createEmitters();
 const counters = Array(100).fill(0);
 let counterIndex = -1;
 
-[1, 11, 101, 1001].forEach((listenerCount) => {
+[1, 10, 100, 1000].forEach((listenerCount) => {
   emitters.forEach((emitter, emitterName) => {
     const eventName = `${listenerCount}-no-args`;
     const ci = ++counterIndex;
@@ -23,28 +23,42 @@ let counterIndex = -1;
       });
     }
 
-    emitter.emit(eventName);
-
     suite.add(`${emitterName}:Emit ${listenerCount} listeners without args`, () => {
       emitter.emit(eventName);
     });
   });
 });
 
-[1, 11, 101, 1001].forEach((listenerCount) => {
+[1, 10, 100, 1000].forEach((listenerCount) => {
   emitters.forEach((emitter, emitterName) => {
     const eventName = `${listenerCount}-5-args`;
     const ci = ++counterIndex;
 
-    for (let i = 0; i < listenerCount; ++i) {
-      emitter.on(eventName, (a, b, c, d, e) => {
-        counters[ci] += a + b + c + d + e;
-      });
-    }
+    switch (emitterName) {
+      case 'mitt': {
+        for (let i = 0; i < listenerCount; ++i) {
+          emitter.on(eventName, ({ a, b, c, d, e }) => {
+            counters[ci] += a + b + c + d + e;
+          });
+        }
 
-    suite.add(`${emitterName}:Emit ${listenerCount} listeners with 5 args`, () => {
-      emitter.emit(eventName, 1, 2, 3, 4, 5);
-    });
+        suite.add(`${emitterName}:Emit ${listenerCount} listeners with 5 args`, () => {
+          emitter.emit(eventName, { a: 1, b: 2, c: 3, d: 4, e: 5 });
+        });
+        break;
+      }
+      default: {
+        for (let i = 0; i < listenerCount; ++i) {
+          emitter.on(eventName, (a, b, c, d, e) => {
+            counters[ci] += a + b + c + d + e;
+          });
+        }
+
+        suite.add(`${emitterName}:Emit ${listenerCount} listeners with 5 args`, () => {
+          emitter.emit(eventName, 1, 2, 3, 4, 5);
+        });
+      }
+    }
   });
 });
 

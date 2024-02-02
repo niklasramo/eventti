@@ -3,7 +3,7 @@ import { createSuite } from '../../utils/create-suite.js';
 import { createEmitters } from '../../utils/create-emitters.js';
 
 // Create test suite.
-export const suite = createSuite('Once');
+export const suite = createSuite('once');
 
 // Create emitters.
 const { emitters, resetEmitters } = createEmitters();
@@ -20,7 +20,8 @@ let counterIndex = -1;
     let suiteCallback;
     switch (emitterName) {
       case 'eventti 3':
-      case 'eventti 4': {
+      case 'eventti 4':
+      case 'mitt': {
         suiteCallback = () => {
           for (let i = 0; i < listenerCount; ++i) {
             emitter.once(eventName, () => {
@@ -59,22 +60,6 @@ let counterIndex = -1;
     }
 
     suite.add(`${emitterName}:Add ${listenerCount} once listeners`, suiteCallback);
-  });
-});
-
-[1, 10, 100, 1000].forEach((listenerCount) => {
-  emitters.forEach((emitter, emitterName) => {
-    const eventName = `test-${listenerCount}`;
-    const ci = ++counterIndex;
-
-    suite.add(`${emitterName}:Add and emit ${listenerCount} once listeners`, () => {
-      for (let i = 0; i < listenerCount; ++i) {
-        emitter.once(eventName, () => {
-          counters[ci] += 1;
-        });
-      }
-      emitter.emit(eventName);
-    });
   });
 });
 

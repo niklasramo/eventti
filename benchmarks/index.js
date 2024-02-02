@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 
+import { suite as emitOnceSuite } from './suites/lib/emit-once.js';
 import { suite as emitSuite } from './suites/lib/emit.js';
+import { suite as mixSuite } from './suites/lib/mix.js';
+import { suite as offSuite } from './suites/lib/off.js';
 import { suite as onSuite } from './suites/lib/on.js';
 import { suite as onceSuite } from './suites/lib/once.js';
-import { suite as offSuite } from './suites/lib/off.js';
 
 // Map for easier access to suites by name
 const suiteMap = {
+  emitOnce: emitOnceSuite,
   emit: emitSuite,
+  mix: mixSuite,
+  off: offSuite,
   on: onSuite,
   once: onceSuite,
-  off: offSuite,
 };
 
 // Function to get suites from CLI arguments
@@ -22,9 +26,7 @@ function getSuitesFromArgs() {
     if (suiteMap[arg]) {
       suites.push(suiteMap[arg]);
     } else {
-      console.log(
-        `No suite found for '${arg}'. Available options are: ${Object.keys(suiteMap).join(', ')}.`,
-      );
+      throw new Error(`Unknown suite: ${arg}`);
     }
   });
 
@@ -35,7 +37,6 @@ const suites = getSuitesFromArgs();
 
 // If no specific suites are specified, run all suites
 if (suites.length === 0) {
-  console.log('No specific suites specified, running all suites.');
   suites.push(...Object.values(suiteMap));
 }
 

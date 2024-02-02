@@ -3,7 +3,7 @@ import { createSuite } from '../../utils/create-suite.js';
 import { createEmitters } from '../../utils/create-emitters.js';
 
 // Create test suite.
-export const suite = createSuite('off');
+export const suite = createSuite('mix');
 
 // Create emitters.
 const { emitters, resetEmitters } = createEmitters();
@@ -12,12 +12,11 @@ const { emitters, resetEmitters } = createEmitters();
 const counters = Array(100).fill(0);
 let counterIndex = -1;
 
-// It's pretty much impossible to test _only_ listener removal performance due
-// to the way Benchmark.js works. So instead we'll test removing the middle
-// listener and adding a new listener. Why middle? Because some emitters
-// optimize for removing the last and/or the first listener and we want to test
-// a more "realistic" scenario. Not the worst, not the best, but somewhere in
-// the middle ;)
+// This test aims to simulate a "real-world" scenario where listeners are added,
+// removed and emitted. The removal is done in the middle of the listeners
+// array to make it more challenging for the emitter to handle. Some emitters
+// optimize for removing the last/first listener, so this will prevent that
+// optimization.
 [10, 100, 1000].forEach((listenerCount) => {
   emitters.forEach((emitter, emitterName) => {
     const eventName = `test-${listenerCount}`;
@@ -45,6 +44,7 @@ let counterIndex = -1;
           const listener = () => (counters[ci] += 1);
           endIds[nextIndex] = emitter.on(eventName, listener);
           nextIndex = ++nextIndex % halfListenerCount;
+          emitter.emit(eventName);
         };
         break;
       }
@@ -67,6 +67,7 @@ let counterIndex = -1;
           const listener = () => (counters[ci] += 1);
           endUnbinders[nextIndex] = emitter.on(eventName, listener);
           nextIndex = ++nextIndex % halfListenerCount;
+          emitter.emit(eventName);
         };
         break;
       }
@@ -95,13 +96,14 @@ let counterIndex = -1;
           emitter.on(eventName, listener);
           endListeners[nextIndex] = listener;
           nextIndex = ++nextIndex % halfListenerCount;
+          emitter.emit(eventName);
         };
         break;
       }
     }
 
     suite.add(
-      `${emitterName}:Remove the middle listener and add a new listener for an event with ${listenerCount} listeners`,
+      `${emitterName}:Remove the middle listener, add a new listener and emit the event for an event with ${listenerCount} listeners`,
       suiteCallback,
     );
   });
