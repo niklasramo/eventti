@@ -304,6 +304,16 @@ Do note that this breaks the API contract as now you can't use the return value 
 
 ## Emitter API
 
+- [Constructor](#constructor)
+- [on( eventName, listener, [ listenerId ] )](#emitteron)
+- [once( eventName, listener, [ listenerId ] )](#emitteronce)
+- [off( [ eventName ], [ listenerId ] )](#emitteroff)
+- [emit( eventName, [ ...args ] )](#emitteremit)
+- [listenerCount( [ eventName ] )](#emitterlistenercount)
+- [Types](#types)
+
+### Constructor
+
 `Emitter` is a class which's constructor accepts an optional [`EmitterOptions`](#emitteroptions) object with the following properties:
 
 - **dedupe**
@@ -350,14 +360,6 @@ emitterB.dedupe = EmitterDedupe.IGNORE;
 // It's okay to change it's value whenever you want.
 emitterB.getId = () => Symbol();
 ```
-
-**Methods**
-
-- [on( eventName, listener, [listenerId] )](#emitter-on)
-- [once( eventName, listener, [listenerId] )](#emitter-once)
-- [off( [eventName], [listenerId] )](#emitter-off)
-- [emit( eventName, [...args] )](#emitter-emit)
-- [listenerCount( [eventName] )](#emitter-listenerCount)
 
 ### emitter.on()
 
