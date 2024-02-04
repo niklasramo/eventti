@@ -1,7 +1,7 @@
 {
   "name": "eventti",
   "version": "4.0.0-alpha",
-  "description": "Tiny and fast multi-purpose event emitter for Node.js and browser wrapped in a simple API.",
+  "description": "A predictable event emitter for pragmatists, written in TypeScript.",
   "keywords": [
     "event",
     "events",
