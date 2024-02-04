@@ -14,33 +14,33 @@ A _predictable_ event emitter for pragmatists, written in TypeScript.
 
 Devs just _love_ to write their own event emitters, don't they? 🙋‍♂️ I've been guilty of writing a few myself, and I've also used many existing implementations of which there certainly is no shortage of.
 
-However, there's always been one aspect that irks me in most of them, and that's the handling of duplicate event listeners. It's inconsistent. In some implementations duplicate listeners are not allowed (and they might be just silently ignored) while in others they are allowed, but then you can't remove a _specific_ listener anymore, because you don't know which one of the duplicates you're removing. Depending on the implementation it might be the first matching listener or all of them. Frustrating.
+However, there's always been one aspect that irks me in most of them, and that's the handling of duplicate event listeners. It's inconsistent. In some implementations duplicate listeners are not allowed (and they might be just silently ignored) while in others they are allowed, but then you can't remove a _specific_ listener anymore, because you don't know which one of the duplicates you're removing. Depending on the implementation it might be the first, last or all matching listeners.
 
 ```ts
 // A very contrived example, but you get the point.
 const ee = new YetAnotherEventEmitter();
-let counter = 10;
-const increment = () => void counter += 10;
+let counter = 1;
+const increment = () => void counter += 1;
 const square = () => void counter *= counter;
 ee.on('test', increment);
 ee.on('test', square);
 ee.on('test', increment);
 ee.off('test', increment); // 🎲
-ee.emit('test'); // counter === ???
+ee.emit('test'); // counter === 1 or 2 or 4
 ```
 
 To rectify this flaw in API design, Eventti follows in the footsteps of `setTimeout()`/`clearTimeout()` (and other similar Web APIs) by assigning and returning a unique id for each listener. No more guessing which listener you're removing.
 
 ```ts
 const eventti = new Eventti();
-let counter = 10;
-const increment = () => void counter += 10;
+let counter = 1;
+const increment = () => void counter += 1;
 const square = () => void counter *= counter;
 const id1 = eventti.on('test', increment);
 const id2 = eventti.on('test', square);
 const id3 = eventti.on('test', increment);
 eventti.off('test', id3); // ✅
-eventti.emit('test'); // counter === 400
+eventti.emit('test'); // counter === 4
 ```
 
 Additionally, you can provide the listener id manually _and_ define strategy for handling duplicate ids. This is especially useful when you want to update an existing listener with a new one _without changing it's index in the listener queue_.
@@ -66,7 +66,7 @@ Listeners and their ids are stored in a `Map<id, listener>` instead of an array 
 
 However, emitting speed is on par with the fastest of emitters due to an optimization Eventti applies: the listeners are cached in an array, which is invalidated any time a listener is removed. This way we don't have to _always_ clone the listeners on emit, most of the time we can go straight to looping the cached array.
 
-Where things get interesting is when we start removing listeners. While most emitters need to loop through an array of listeners to find the matching listener(s), Eventti can just delete the listener from the `Map` by the listener id. This is a huge performance boost when you have a lot of listeners.
+Where things get interesting is when we start removing listeners. While most emitters need to loop an array of listeners to find the matching listener(s), Eventti can just delete the listener from the `Map` by the listener id. This is a huge performance boost when you have a lot of listeners.
 
 In practice, Eventti and most other emitters are so fast that you don't need to worry about performance. But if you're interested in the numbers, we have some [benchmarks](./benchmarks/), which you can run with `npm run test-perf`.
 
@@ -230,7 +230,9 @@ const emitter = new Emitter();
 emitter.dedupe = EmitterDedupe.THROW;
 ```
 
-### Mimicking the _classic_ event emitter API
+### Tips and tricks
+
+#### Mimicking the _classic_ event emitter API
 
 Eventti's API is a bit different from most other event emitters, but you can easily mimic the classic API (where you remove listeners based on the callback) by using the `getId` option. This way you can use the listener callback as the listener id by default and remove listeners based on the callback. But do note that this way duplicate listeners can't be added, which may or may not be what you want.
 
@@ -260,20 +262,62 @@ emitter.on('a', listener);
 emitter.on('a', listener); // throws an error
 ```
 
+#### Ergonomic unbinding
+
+Eventti's API is designed to be explicit and predictable, but sometimes you might want a bit more ergonomic API by returning a function from the `.on()` and `.once()` methods which you can use to unbind the listener.
+
+Here's a recipe for that:
+
+```ts
+import { Emitter, Events, EventListenerId, EmitterOptions } from 'eventti';
+
+class ErgonomicEmitter<T extends Events> extends Emitter<T> {
+  constructor(options?: EmitterOptions) {
+    super(options);
+  }
+
+  on<EventName extends keyof T>(
+    eventName: EventName,
+    listener: T[EventName],
+    listenerId?: EventListenerId,
+  ): EventListenerId {
+    const id = super.on(eventName, listener, listenerId);
+    return () => this.off(eventName, id);
+  }
+
+  once<EventName extends keyof T>(
+    eventName: EventName,
+    listener: T[EventName],
+    listenerId?: EventListenerId,
+  ): EventListenerId {
+    const id = super.once(eventName, listener, listenerId);
+    return () => this.off(eventName, id);
+  }
+}
+
+const emitter = new ErgonomicEmitter();
+const unbind = emitter.on('a', () => console.log('foo'));
+unbind(); // removes the listener
+```
+
+Do note that this breaks the API contract as now you can't use the return value of `.on()` and `.once()` methods anymore to remove the listeners with `.off` method. But if you're okay with that, this is a nice way to make the API more ergonomic.
+
 ## Emitter API
 
-`Emitter` is a class which's constructor accepts an optional configuration object with the following properties:
+`Emitter` is a class which's constructor accepts an optional [`EmitterOptions`](#emitteroptions) object with the following properties:
 
-- **dedupe** &nbsp;&mdash;&nbsp; `"add" | "update" | "ignore" | "throw"`∫
-  - Defines how a duplicate event listener id is handled.
+- **dedupe**
+  - Defines how a duplicate event listener id is handled:
     - `"add"`: the existing listener (of the id) is removed and the new listener is appended to the event's listener queue.
     - `"update"`: the existing listener (of the id) is replaced with the new listener without changing the index of the listener in the event's listener queue.
     - `"ignore"`: the new listener is silently ignored and not added to the event.
     - `"throw"`: as the name suggests an error will be thrown.
-  - Optional. Defaults to `"add"` if omitted.
-- **getId** &nbsp;&mdash;&nbsp; `(listener) => null | string | number | symbol | bigint | Function | Object`
+  - Accepts: [`EmitterDedupe`](#emitterdedupe).
+  - Optional, defaults to `"add"` if omitted.
+- **getId**
   - A function which is used to get the listener id for a listener callback. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else. Receives the listener callback as the first (and only) argument.
-  - Optional. Defaults to `() => Symbol()` if omitted.
+  - Accepts: `(listener: EventListener) => EventListenerId`.
+  - Optional, defaults to `() => Symbol()` if omitted.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -311,7 +355,7 @@ emitterB.getId = () => Symbol();
 
 - [on( eventName, listener, [listenerId] )](#emitter-on)
 - [once( eventName, listener, [listenerId] )](#emitter-once)
-- [off( [eventName], [target] )](#emitter-off)
+- [off( [eventName], [listenerId] )](#emitter-off)
 - [emit( eventName, [...args] )](#emitter-emit)
 - [listenerCount( [eventName] )](#emitter-listenerCount)
 
@@ -325,17 +369,22 @@ Add a listener to an event.
 emitter.on( eventName, listener, [ listenerId ] )
 ```
 
-**Arguments**
+**Parameters**
 
-- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
-- **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
-  - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; `null | string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
-  - Optionally you can provide the listener id manually.
+1. **eventName**
+   - The name of the event you want to add a listener to.
+   - Accepts: [`EventName`](#eventname).
+2. **listener**
+   - A listener function that will be called when the event is emitted.
+   - Accepts: [`EventListener`](#eventlistener).
+3. **listenerId**
+   - The id for the listener. If not provided, the id will be generated by the `emitter.getId` function.
+   - Accepts: [`EventListenerId`](#eventlistenerid).
+   - _optional_
 
-**Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
+**Returns**
 
-A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
+A [listener id](#eventlistenerid), which can be used to remove this specific listener. Unless manually provided via arguments this will be whatever the `emitter.getId` method spits out, and by default it spits out symbols which are guaranteed to be always unique.
 
 **Examples**
 
@@ -387,17 +436,22 @@ Add a one-off listener to an event.
 emitter.once( eventName, listener, [ listenerId ] )
 ```
 
-**Arguments**
+**Parameters**
 
-- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
-- **listener** &nbsp;&mdash;&nbsp; `(...data: any) => any`
-  - A listener function that will be called when the event is emitted.
-- **listenerId** &nbsp;&mdash;&nbsp; `null | string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
-  - Optionally you can provide the listener id manually.
+1. **eventName**
+   - The name of the event you want to add a listener to.
+   - Accepts: [`EventName`](#eventname).
+2. **listener**
+   - A listener function that will be called when the event is emitted.
+   - Accepts: [`EventListener`](#eventlistener).
+3. **listenerId**
+   - The id for the listener. If not provided, the id will be generated by the `emitter.getId` function.
+   - Accepts: [`EventListenerId`](#eventlistenerid).
+   - _optional_
 
-**Returns** &nbsp;&mdash;&nbsp; `string | number | symbol`
+**Returns**
 
-A listener id, which can be used to remove this specific listener. By default this will always be a symbol unless manually provided.
+A [listener id](#eventlistenerid), which can be used to remove this specific listener. Unless manually provided via arguments this will be whatever the `emitter.getId` method spits out, and by default it spits out symbols which are guaranteed to be always unique.
 
 **Examples**
 
@@ -421,18 +475,24 @@ emitter.emit('test');
 
 ### emitter.off()
 
-Remove an event listener or multiple event listeners. If no _target_ is provided all listeners for the specified event will be removed. If no _eventName_ is provided all listeners from the emitter will be removed.
+Remove an event listener or multiple event listeners. If no _listenerId_ is provided all listeners for the specified event will be removed. If no _eventName_ is provided all listeners from the emitter will be removed.
 
 **Syntax**
 
 ```
-emitter.off( [ eventName ], [ target ] );
+emitter.off( [ eventName ], [ listenerId ] );
 ```
 
-**Arguments**
+**Parameters**
 
-- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol` &nbsp;&mdash;&nbsp; _optional_
-- **listenerId** &nbsp;&mdash;&nbsp; `string | number | symbol | bigint | Function | Object` &nbsp;&mdash;&nbsp; _optional_
+1. **eventName**
+   - The name of the event you want to remove listeners from.
+   - Accepts: [`EventName`](#eventname).
+   - _optional_
+2. **listenerId**
+   - The id of the listener you want to remove.
+   - Accepts: [`EventListenerId`](#eventlistenerid).
+   - _optional_
 
 **Examples**
 
@@ -452,9 +512,6 @@ const id4 = emitter.on('test', b);
 // Remove specific listener by id.
 emitter.off('test', id2);
 
-// Remove all instances of a specific listener function.
-emitter.off('test', a);
-
 // Remove all listeners from an event.
 emitter.off('test');
 
@@ -472,11 +529,15 @@ Emit events.
 emitter.emit( eventName, [ ...args ] )
 ```
 
-**Arguments**
+**Parameters**
 
-- **eventName** &nbsp;&mdash;&nbsp; `string | number | symbol`
-- **...args** &nbsp;&mdash;&nbsp; `any` &nbsp;&mdash;&nbsp; _optional_
-  - The arguments which will be provided to the listeners when called.
+1. **eventName**
+   - The name of the event you want to emit.
+   - Accepts: [`EventName`](#eventname).
+2. **...args**
+   - The arguments which will be provided to the listeners when called.
+   - Accepts: `any`.
+   - Optional.
 
 **Examples**
 
@@ -502,9 +563,12 @@ Returns the listener count for an event if _eventName_ is provided. Otherwise re
 emitter.listenerCount( [ eventName ] )
 ```
 
-**Arguments**
+**Parameters**
 
-- **eventName** &nbsp;&mdash;&nbsp; `string / number / symbol`
+1. **eventName**
+   - The name of the event you want to get the listener count for.
+   - Accepts: [`EventName`](#eventname).
+   - Optional.
 
 **Examples**
 
@@ -524,6 +588,60 @@ emitter.listenerCount('a'); // 1
 emitter.listenerCount('b'); // 2
 emitter.listenerCount('c'); // 3
 emitter.listenerCount(); // 6
+```
+
+### Types
+
+Here's a list of all the types that you can import from `eventti`.
+
+```ts
+import {
+  EventName,
+  EventListener,
+  EventListenerId,
+  Events,
+  EmitterDedupe,
+  EmitterOptions,
+} from 'eventti';
+```
+
+#### EventName
+
+```ts
+type EventName = string | number | symbol;
+```
+
+#### EventListener
+
+```ts
+type EventListener = (...data: any) => any;
+```
+
+#### Events
+
+```ts
+type Events = Record<string | number | symbol, EventListener>;
+```
+
+#### EventListenerId
+
+```ts
+type EventListenerId = null | string | number | symbol | bigint | Function | Object;
+```
+
+#### EmitterDedupe
+
+```ts
+type EmitterDedupe = 'add' | 'update' | 'ignore' | 'throw';
+```
+
+#### EmitterOptions
+
+```ts
+type EmitterOptions = {
+  dedupe?: EmitterDedupe;
+  getId?: (listener: EventListener) => EventListenerId;
+};
 ```
 
 ## License
