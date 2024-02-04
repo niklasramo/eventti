@@ -1,0 +1,14 @@
+name: CI master
+on:
+  push:
+    branches:
+      - 'main'
+    tags-ignore:
+      - '**'
+  workflow_dispatch:
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run-tests.yml
+    secrets:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
