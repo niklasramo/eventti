@@ -1,6 +1,6 @@
 {
   "name": "eventti",
-  "version": "4.0.0-alpha",
+  "version": "4.0.0",
   "description": "A predictable event emitter for pragmatists, written in TypeScript.",
   "keywords": [
     "event",
@@ -67,10 +67,10 @@
     "mitt": "3.0.1",
     "mocha": "10.2.0",
     "nanoevents": "9.0.0",
-    "prettier": "3.2.4",
+    "prettier": "3.2.5",
     "rimraf": "5.0.5",
     "size-limit": "11.0.2",
-    "tseep": "1.2.0",
+    "tseep": "1.2.1",
     "tsup": "8.0.1",
     "typescript": "5.3.3"
   }
