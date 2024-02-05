@@ -4,7 +4,7 @@ A _predictable_ event emitter for pragmatists, written in TypeScript.
 
 - 🔮 Predictable behaviour.
 - 🎯 Hits the sweet spot between features, size and performance.
-- 🎁 Small footprint (well under 1kB gzipped).
+- 🎁 Small footprint (627 bytes minified and gzipped to be exact).
 - ⚡ Highly optimized and stable performance across browsers.
 - 🤖 Extensively tested.
 - 🍭 No runtime dependencies, what you see is what you get.
@@ -32,26 +32,28 @@ ee.emit('test'); // counter === 1 or 2 or 4
 To rectify this flaw in API design, Eventti follows in the footsteps of `setTimeout()`/`clearTimeout()` (and other similar Web APIs) by assigning and returning a unique id for each listener. No more guessing which listener you're removing.
 
 ```ts
-const eventti = new Eventti();
+import { Emitter } from 'eventti';
+const ee = new Emitter();
 let counter = 1;
 const increment = () => void counter += 1;
 const square = () => void counter *= counter;
-const id1 = eventti.on('test', increment);
-const id2 = eventti.on('test', square);
-const id3 = eventti.on('test', increment);
-eventti.off('test', id3); // ✅
-eventti.emit('test'); // counter === 4
+const id1 = ee.on('test', increment);
+const id2 = ee.on('test', square);
+const id3 = ee.on('test', increment);
+ee.off('test', id3); // ✅
+ee.emit('test'); // counter === 4
 ```
 
 Additionally, you can provide the listener id manually _and_ define strategy for handling duplicate ids. This is especially useful when you want to update an existing listener with a new one _without changing it's index in the listener queue_.
 
 ```ts
-const eventti = new Emitter({ dedupe: 'update' });
-eventti.on('test', () => console.log('foo'), 'idA');
-eventti.on('test', () => console.log('bar'), 'idB');
+import { Emitter } from 'eventti';
+const ee = new Emitter({ dedupe: 'update' });
+ee.on('test', () => console.log('foo'), 'idA');
+ee.on('test', () => console.log('bar'), 'idB');
 // Update the listener for idA.
-eventti.on('test', () => console.log('baz'), 'idA');
-eventti.emit('test');
+ee.on('test', () => console.log('baz'), 'idA');
+ee.emit('test');
 // -> baz
 // -> bar
 ```
@@ -72,7 +74,7 @@ In practice, Eventti and most other emitters are so fast that you don't need to 
 
 ## Getting started
 
-The library is provided as an ECMAScript module (ESM), a CommonJS module (CJS) and as an IIFE bundle.
+The library is provided as an ECMAScript module (ESM) and a CommonJS module (CJS).
 
 ### Node
 
@@ -133,7 +135,7 @@ emitter.emit('a', 'foo');
 emitter.emit('b', 'bar', 5000);
 // -> bar 5000
 
-// Count event listeners.
+// Count "a" event listeners.
 emitter.listenerCount('a'); // -> 1
 
 // Count all listeners.
@@ -144,15 +146,15 @@ emitter.off('a', idA);
 emitter.off('b', idB);
 ```
 
-### Listener ids and dedupe modes
+## Listener ids and dedupe modes
 
-The founding feature of Eventti is that every listener is assigned with a unique id. The id can be any value except `null` or `undefined`. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else _and_ you can also provide the id manually via `.on()` and `.once()` methods.
+The founding feature of Eventti is that every listener is assigned with an id. The id can be any value except `undefined`. By default Eventti uses `Symbol()` to create unique ids, but you can provide your own function if you want to use something else _and_ you can also provide the id manually via `.on()` and `.once()` methods.
 
 Now the question is, what should happen when you try to add a listener with an id that already exists? Well, it's up to you and Eventti allows you to choose from four different options what the behaviour should be.
 
-#### dedupe: "add"
+### dedupe: "add"
 
-When the dedupe is set to "add" (which it is by default) the existing listener (matching the id) will be first completely removed and then the new listener will be appended to the listener queue.
+When `dedupe` is set to "add" (which it is by default) the existing listener (matching the id) will be first completely removed and then the new listener will be appended to the listener queue.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -168,9 +170,9 @@ emitter.emit('a');
 // -> foo 2
 ```
 
-#### dedupe: "update"
+### dedupe: "update"
 
-When the dedupe is set to "update" the existing listener (matching the id) will be replaced with new listener while keeping the listener at the same index in the listener queue.
+When `dedupe` is set to "update" the existing listener (matching the id) will be replaced with new listener while keeping the listener at the same index in the listener queue.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -186,9 +188,9 @@ emitter.emit('a');
 // -> bar
 ```
 
-#### dedupe: "ignore"
+### dedupe: "ignore"
 
-When the dedupe is set to "ignore" the new listener is simply ignored.
+When `dedupe` is set to "ignore" the new listener is simply ignored.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -204,9 +206,9 @@ emitter.emit('a');
 // -> bar
 ```
 
-#### dedupe: "throw"
+### dedupe: "throw"
 
-When the dedupe is set to "throw" an error is thrown.
+When `dedupe` is set to "throw" an error is thrown.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -218,9 +220,9 @@ emitter.on('a', () => console.log('bar'), 'bar');
 emitter.on('a', () => console.log('foo 2'), 'foo'); // throws an error
 ```
 
-#### Changing dedupe mode
+### Changing dedupe mode
 
-You can change the `dedupe` mode at any point after instantiaiting the emitter. Just directly set the mode via emitter's `dedupe` property.
+You can change the `dedupe` mode at any point after instantiaiting the emitter. Just directly set the mode via the emitter's `dedupe` property.
 
 ```ts
 import { Emitter, EmitterDedupe } from 'eventti';
@@ -230,11 +232,11 @@ const emitter = new Emitter();
 emitter.dedupe = EmitterDedupe.THROW;
 ```
 
-### Tips and tricks
+## Tips and tricks
 
-#### Mimicking the _classic_ event emitter API
+### Mimicking the _classic_ event emitter API
 
-Eventti's API is a bit different from most other event emitters, but you can easily mimic the classic API (where you remove listeners based on the callback) by using the `getId` option. This way you can use the listener callback as the listener id by default and remove listeners based on the callback. But do note that this way duplicate listeners can't be added, which may or may not be what you want.
+Eventti's API is a bit different from most other event emitters, but you can easily mimic the _classic_ API (where you remove listeners based on the callback) by using the `getId` option. This way you can use the listener callback as the listener id by default and remove listeners based on the callback. But do note that this way duplicate listeners can't be added, which may or may not be what you want.
 
 ```ts
 import { Emitter } from 'eventti';
@@ -262,7 +264,7 @@ emitter.on('a', listener);
 emitter.on('a', listener); // throws an error
 ```
 
-#### Ergonomic unbinding
+### Ergonomic unbinding
 
 Eventti's API is designed to be explicit and predictable, but sometimes you might want a bit more ergonomic API by returning a function from the `.on()` and `.once()` methods which you can use to unbind the listener.
 
@@ -301,6 +303,68 @@ unbind(); // removes the listener
 ```
 
 Do note that this breaks the API contract as now you can't use the return value of `.on()` and `.once()` methods anymore to remove the listeners with `.off` method. But if you're okay with that, this is a nice way to make the API more ergonomic.
+
+### Building a ticker
+
+Eventti is a great fit for building a ticker, which is a common use case for event emitters. Here's a simple example of how you could build a `requestAnimationFrame` ticker.
+
+```ts
+import { Emitter, EmitterOptions, EventListenerId } from 'eventti';
+
+class Ticker {
+  private tickId: number | null;
+  private emitter: Emitter<{ tick: (time: number) => void }>;
+
+  constructor(options?: EmitterOptions) {
+    this.tickId = null;
+    this.emitter = new Emitter(options);
+  }
+
+  on(listener: (time: number) => void, listenerId?: EventListenerId): EventListenerId {
+    return this.emitter.on('tick', listener, listenerId);
+  }
+
+  once(listener: (time: number) => void, listenerId?: EventListenerId): EventListenerId {
+    return this.emitter.once('tick', listener, listenerId);
+  }
+
+  off(listenerId?: EventListenerId): void {
+    this.emitter.off('tick', listenerId);
+  }
+
+  start(): void {
+    if (this.tickId !== null) return;
+    const tick = (time: number) => {
+      this.tickId = requestAnimationFrame(tick);
+      if (time) this.emitter.emit('tick', time);
+    };
+    tick(0);
+  }
+
+  stop(): void {
+    if (this.tickId === null) return;
+    cancelAnimationFrame(this.tickId);
+    this.tickId = null;
+  }
+}
+
+const ticker = new Ticker();
+
+const idA = ticker.on(() => console.log('tick a'));
+const idB = ticker.on(() => console.log('tick b'));
+
+ticker.off(idB);
+
+ticker.start();
+// -> tick a
+// -> tick a
+// -> tick a
+// ...
+
+ticker.stop();
+```
+
+If you want a more advanced and battle-tested ticker you might want to check out [tikki](https://github.com/niklasramo/tikki), a ticker implementation built on top of Eventti.
 
 ## Emitter API
 
@@ -380,7 +444,7 @@ emitter.on( eventName, listener, [ listenerId ] )
    - A listener function that will be called when the event is emitted.
    - Accepts: [`EventListener`](#eventlistener).
 3. **listenerId**
-   - The id for the listener. If not provided, the id will be generated by the `emitter.getId` function.
+   - The id for the listener. If not provided, the id will be generated by the `emitter.getId` method.
    - Accepts: [`EventListenerId`](#eventlistenerid).
    - _optional_
 
