@@ -82,8 +82,7 @@ var Emitter = class {
       return;
     }
     const eventData = this._events.get(eventName);
-    if (!eventData)
-      return;
+    if (!eventData) return;
     if (eventData.idMap.delete(listenerId)) {
       eventData.emitList = null;
       if (!eventData.idMap.size) {
@@ -93,8 +92,7 @@ var Emitter = class {
   }
   emit(eventName, ...args) {
     const listeners = this._getListeners(eventName);
-    if (!listeners)
-      return;
+    if (!listeners) return;
     const { length } = listeners;
     if (args.length) {
       if (length === 1) {

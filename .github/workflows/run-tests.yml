@@ -15,7 +15,6 @@ jobs:
         with:
           node-version: '18.x'
       - run: npm ci
-      - run: npm run format-check
       - run: npm run test
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}

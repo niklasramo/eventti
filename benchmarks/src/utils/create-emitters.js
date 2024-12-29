@@ -5,7 +5,7 @@ import { EventEmitter as TseepEmitter } from 'tseep';
 import EventEmitter2 from 'eventemitter2';
 import EventEmitter3 from 'eventemitter3';
 import { Emitter as EventtiEmitter3 } from 'eventti-3';
-import { Emitter as EventtiEmitter4 } from '../../dist/index.js';
+import { Emitter as EventtiEmitter4 } from '../../../dist/index.js';
 
 // Map of emitter names to emitter creation functions.
 const EMITTER_MAP = new Map([

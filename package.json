@@ -1,6 +1,6 @@
 {
   "name": "eventti",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A predictable event emitter for pragmatists, written in TypeScript.",
   "keywords": [
     "event",
@@ -37,41 +37,35 @@
     "LICENSE.md"
   ],
   "scripts": {
-    "test": "npm run ts-check && npm run test-node && npm run test-browser",
+    "test": "npm run lint && npm run test-node && npm run test-browser",
     "test-browser": "karma start karma.conf.cjs",
     "test-node": "mocha tests/dist/index.js",
-    "test-perf": "node benchmarks/index.js",
     "test-size": "size-limit",
     "build": "npm run ts-check && npm run format && npm run build-lib && npm run build-tests",
     "build-lib": "rimraf ./dist && tsup --config ./tsup.config.lib.ts",
     "build-tests": "rimraf ./tests/dist && tsup --config ./tsup.config.tests.ts",
     "ts-check": "tsc --noEmit",
-    "format": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
-    "format-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\""
+    "prettier-write": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
+    "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
+    "lint": "npm run prettier-check && npm run ts-check",
+    "format": "npm run prettier-write",
+    "benchmark": "npm ci --prefix benchmarks && npm run test --prefix benchmarks"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "11.0.2",
-    "@types/benchmark": "2.1.5",
-    "@types/chai": "4.3.11",
-    "@types/mocha": "10.0.6",
-    "benchmark": "2.1.4",
-    "chai": "4.4.1",
-    "dotenv": "16.4.1",
-    "eventemitter2": "6.4.9",
-    "eventemitter3": "5.0.1",
-    "eventti3": "git://github.com/niklasramo/eventti.git#3.0.0",
-    "karma": "6.4.2",
+    "@size-limit/preset-small-lib": "11.1.6",
+    "@types/chai": "5.0.1",
+    "@types/mocha": "10.0.10",
+    "chai": "5.1.2",
+    "dotenv": "16.4.7",
+    "karma": "6.4.4",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",
     "karma-mocha-reporter": "2.2.5",
-    "mitt": "3.0.1",
-    "mocha": "10.2.0",
-    "nanoevents": "9.0.0",
-    "prettier": "3.2.5",
-    "rimraf": "5.0.5",
-    "size-limit": "11.0.2",
-    "tseep": "1.2.1",
-    "tsup": "8.0.1",
-    "typescript": "5.3.3"
+    "mocha": "11.0.1",
+    "prettier": "3.4.2",
+    "rimraf": "6.0.1",
+    "size-limit": "11.1.6",
+    "tsup": "8.3.5",
+    "typescript": "5.7.2"
   }
 }
