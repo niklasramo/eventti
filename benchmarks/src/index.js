@@ -1,65 +1,28 @@
 #!/usr/bin/env node
+import suite1 from './suites/1.js';
+import suite2 from './suites/2.js';
+import suite3 from './suites/3.js';
+import suite4 from './suites/4.js';
+import suite5 from './suites/5.js';
+import suite6 from './suites/6.js';
 
-import { suite as emitOnceSuite } from './suites/lib/emit-once.js';
-import { suite as emitSuite } from './suites/lib/emit.js';
-import { suite as mixSuite } from './suites/lib/mix.js';
-import { suite as offSuite } from './suites/lib/off.js';
-import { suite as onSuite } from './suites/lib/on.js';
-import { suite as onceSuite } from './suites/lib/once.js';
-
-// Map for easier access to suites by name
 const suiteMap = {
-  emitOnce: emitOnceSuite,
-  emit: emitSuite,
-  mix: mixSuite,
-  off: offSuite,
-  on: onSuite,
-  once: onceSuite,
+  1: suite1,
+  2: suite2,
+  3: suite3,
+  4: suite4,
+  5: suite5,
+  6: suite6,
 };
 
-// Function to get suites from CLI arguments
-function getSuitesFromArgs() {
-  const args = process.argv.slice(2); // Remove the first two elements (node path and script path)
-  const suites = [];
+async function runSuites() {
+  const args = process.argv.slice(2);
+  const suiteNames = args.length ? args.filter((arg) => suiteMap[arg]) : Object.keys(suiteMap);
 
-  args.forEach((arg) => {
-    if (suiteMap[arg]) {
-      suites.push(suiteMap[arg]);
-    } else {
-      throw new Error(`Unknown suite: ${arg}`);
-    }
-  });
-
-  return suites;
-}
-
-const suites = getSuitesFromArgs();
-
-// If no specific suites are specified, run all suites
-if (suites.length === 0) {
-  suites.push(...Object.values(suiteMap));
-}
-
-// Setup suites to run in sequence
-for (let i = 0; i < suites.length; ++i) {
-  const suite = suites[i];
-  const nextSuite = suites[i + 1];
-
-  suite.on('start', function () {
-    console.log(`Suite: ${suite.name}`);
-  });
-
-  if (nextSuite) {
-    suite.on('complete', function () {
-      console.log('');
-      nextSuite.run();
-    });
+  for (const suiteName of suiteNames) {
+    console.log(`\nRunning suite ${suiteName} benchmarks:\n`);
+    await suiteMap[suiteName]();
   }
 }
 
-// Start running suites
-if (suites.length > 0) {
-  suites[0].run();
-} else {
-  console.log('No suites to run.');
-}
+runSuites().catch(console.error);

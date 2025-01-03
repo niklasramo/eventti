@@ -17,8 +17,8 @@ declare class Emitter<T extends Events> {
     dedupe: EmitterDedupe;
     getId: (listener: EventListener) => EventListenerId;
     protected _events: Map<EventName, {
-        idMap: Map<EventListenerId, EventListener>;
-        emitList: EventListener[] | null;
+        m: Map<EventListenerId, EventListener>;
+        l: EventListener[] | null;
     }>;
     constructor(options?: EmitterOptions);
     protected _getListeners<EventName extends keyof T>(eventName: EventName): EventListener[] | null;

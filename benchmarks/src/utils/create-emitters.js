@@ -4,22 +4,22 @@ import mitt from 'mitt';
 import { EventEmitter as TseepEmitter } from 'tseep';
 import EventEmitter2 from 'eventemitter2';
 import EventEmitter3 from 'eventemitter3';
-import { Emitter as EventtiEmitter3 } from 'eventti-3';
-import { Emitter as EventtiEmitter4 } from '../../../dist/index.js';
+import { Emitter as EventtiEmitter } from 'eventti';
+import { Emitter as EventtiEmitterLocal } from '../../../dist/index.js';
 
 // Map of emitter names to emitter creation functions.
 const EMITTER_MAP = new Map([
   [
-    'eventti 4',
+    'eventti local',
     {
       create: () => {
-        const eventti = new EventtiEmitter4();
+        const eventti = new EventtiEmitterLocal();
 
-        // By default eventti4 creates a new symbol as the listener id, but that is
-        // quite a bit slower than just incrementing a number. Using a symbol as the
-        // listener id is the safest option as there is no chance of a collision, but
-        // using a number is also fine as long as the user doesn't use a number value
-        // manually as the listener id.
+        // By default eventti creates a new symbol as the listener id, but that
+        // is quite a bit slower than just incrementing a number. Using a symbol
+        // as the listener id is the safest option as there is no chance of a
+        // collision, but using a number is also fine as long as the user
+        // doesn't use a number value manually as the listener id.
         let _id = Number.MIN_SAFE_INTEGER;
         eventti.getId = () => ++_id;
 
@@ -31,9 +31,21 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'eventti 3',
+    'eventti',
     {
-      create: () => new EventtiEmitter3(),
+      create: () => {
+        const eventti = new EventtiEmitter();
+
+        // By default eventti creates a new symbol as the listener id, but that
+        // is quite a bit slower than just incrementing a number. Using a symbol
+        // as the listener id is the safest option as there is no chance of a
+        // collision, but using a number is also fine as long as the user
+        // doesn't use a number value manually as the listener id.
+        let _id = Number.MIN_SAFE_INTEGER;
+        eventti.getId = () => ++_id;
+
+        return eventti;
+      },
       destroy: (emitter) => emitter.off(),
     },
   ],
@@ -43,7 +55,8 @@ const EMITTER_MAP = new Map([
       create: () => {
         const nano = createNanoEmitter();
 
-        // Add once method to nanoevents emitter (as instructed in nanoevents README).
+        // Add once method as it is missing in mitt. We do it with the same
+        // logic as in eventti to keep the benchmarks fair.
         nano.once = (event, callback) => {
           let isCalled = false;
           const unbind = nano.on(event, (...args) => {
@@ -68,7 +81,8 @@ const EMITTER_MAP = new Map([
       create: () => {
         const emitter = mitt();
 
-        // Add once method to nanoevents emitter (as instructed in nanoevents README).
+        // Add once method as it is missing in mitt. We do it with the same
+        // logic as in eventti to keep the benchmarks fair.
         emitter.once = (event, callback) => {
           let isCalled = false;
           const onceCallback = (data) => {

@@ -10,29 +10,28 @@ var EmitterDedupe = {
 };
 var Emitter = class {
   constructor(options = {}) {
-    const { dedupe = EmitterDedupe.ADD, getId = () => Symbol() } = options;
-    this.dedupe = dedupe;
-    this.getId = getId;
+    this.dedupe = options.dedupe || EmitterDedupe.ADD;
+    this.getId = options.getId || (() => Symbol());
     this._events = /* @__PURE__ */ new Map();
   }
   _getListeners(eventName) {
     const eventData = this._events.get(eventName);
     if (eventData) {
-      const { idMap } = eventData;
+      const idMap = eventData.m;
       if (idMap.size) {
-        return eventData.emitList = eventData.emitList || [...idMap.values()];
+        return eventData.l = eventData.l || [...idMap.values()];
       }
     }
     return null;
   }
   on(eventName, listener, listenerId) {
-    const { _events } = this;
-    let eventData = _events.get(eventName);
+    const events = this._events;
+    let eventData = events.get(eventName);
     if (!eventData) {
-      eventData = { idMap: /* @__PURE__ */ new Map(), emitList: null };
-      _events.set(eventName, eventData);
+      eventData = { m: /* @__PURE__ */ new Map(), l: null };
+      events.set(eventName, eventData);
     }
-    const { idMap, emitList } = eventData;
+    const idMap = eventData.m;
     listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
     if (idMap.has(listenerId)) {
       switch (this.dedupe) {
@@ -43,17 +42,17 @@ var Emitter = class {
           return listenerId;
         }
         case EmitterDedupe.UPDATE: {
-          eventData.emitList = null;
+          eventData.l = null;
           break;
         }
         default: {
           idMap.delete(listenerId);
-          eventData.emitList = null;
+          eventData.l = null;
         }
       }
     }
     idMap.set(listenerId, listener);
-    emitList?.push(listener);
+    eventData.l?.push(listener);
     return listenerId;
   }
   once(eventName, listener, listenerId) {
@@ -61,7 +60,6 @@ var Emitter = class {
     listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
     return this.on(
       eventName,
-      // @ts-ignore
       (...args) => {
         if (!isCalled) {
           isCalled = true;
@@ -83,32 +81,24 @@ var Emitter = class {
     }
     const eventData = this._events.get(eventName);
     if (!eventData) return;
-    if (eventData.idMap.delete(listenerId)) {
-      eventData.emitList = null;
-      if (!eventData.idMap.size) {
+    if (eventData.m.delete(listenerId)) {
+      eventData.l = null;
+      if (!eventData.m.size) {
         this._events.delete(eventName);
       }
     }
   }
   emit(eventName, ...args) {
     const listeners = this._getListeners(eventName);
-    if (!listeners) return;
-    const { length } = listeners;
-    if (args.length) {
-      if (length === 1) {
-        listeners[0](...args);
-      } else {
-        let i = 0;
-        for (; i < length; i++) {
+    if (listeners) {
+      const len = listeners.length;
+      let i = 0;
+      if (args.length) {
+        for (; i < len; i++) {
           listeners[i](...args);
         }
-      }
-    } else {
-      if (length === 1) {
-        listeners[0]();
       } else {
-        let i = 0;
-        for (; i < length; i++) {
+        for (; i < len; i++) {
           listeners[i]();
         }
       }
@@ -117,12 +107,12 @@ var Emitter = class {
   listenerCount(eventName) {
     if (eventName === void 0) {
       let count = 0;
-      this._events.forEach((_value, key) => {
-        count += this.listenerCount(key);
+      this._events.forEach((value) => {
+        count += value.m.size;
       });
       return count;
     }
-    return this._events.get(eventName)?.idMap.size || 0;
+    return this._events.get(eventName)?.m.size || 0;
   }
 };
 

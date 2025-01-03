@@ -25,13 +25,12 @@ export class Emitter<T extends Events> {
   getId: (listener: EventListener) => EventListenerId;
   protected _events: Map<
     EventName,
-    { idMap: Map<EventListenerId, EventListener>; emitList: EventListener[] | null }
+    { m: Map<EventListenerId, EventListener>; l: EventListener[] | null }
   >;
 
   constructor(options: EmitterOptions = {}) {
-    const { dedupe = EmitterDedupe.ADD, getId = () => Symbol() } = options;
-    this.dedupe = dedupe;
-    this.getId = getId;
+    this.dedupe = options.dedupe || EmitterDedupe.ADD;
+    this.getId = options.getId || (() => Symbol());
     this._events = new Map();
   }
 
@@ -43,9 +42,9 @@ export class Emitter<T extends Events> {
     // listeners are removed.
     const eventData = this._events.get(eventName);
     if (eventData) {
-      const { idMap } = eventData;
+      const idMap = eventData.m;
       if (idMap.size) {
-        return (eventData.emitList = eventData.emitList || [...idMap.values()]);
+        return (eventData.l = eventData.l || [...idMap.values()]);
       }
     }
     return null;
@@ -57,15 +56,15 @@ export class Emitter<T extends Events> {
     listenerId?: EventListenerId,
   ): EventListenerId {
     // Get or create the event data.
-    const { _events } = this;
-    let eventData = _events.get(eventName);
+    const events = this._events;
+    let eventData = events.get(eventName);
     if (!eventData) {
-      eventData = { idMap: new Map(), emitList: null };
-      _events.set(eventName, eventData);
+      eventData = { m: new Map(), l: null };
+      events.set(eventName, eventData);
     }
 
-    // Get the id map and emit list.
-    const { idMap, emitList } = eventData;
+    // Get the id map.
+    const idMap = eventData.m;
 
     // Create listener id if not provided.
     listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
@@ -80,12 +79,12 @@ export class Emitter<T extends Events> {
           return listenerId;
         }
         case EmitterDedupe.UPDATE: {
-          eventData.emitList = null;
+          eventData.l = null;
           break;
         }
         default: {
           idMap.delete(listenerId);
-          eventData.emitList = null;
+          eventData.l = null;
         }
       }
     }
@@ -96,7 +95,7 @@ export class Emitter<T extends Events> {
     // Add to emit list if needed. We can safely add new listeners to the
     // end of emit list even if it is currently emitting, but we can't remove
     // items from it while it is emitting.
-    emitList?.push(listener);
+    eventData.l?.push(listener);
 
     return listenerId;
   }
@@ -110,14 +109,13 @@ export class Emitter<T extends Events> {
     listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
     return this.on(
       eventName,
-      // @ts-ignore
-      (...args: any[]) => {
+      ((...args) => {
         if (!isCalled) {
           isCalled = true;
           this.off(eventName, listenerId);
           listener(...args);
         }
-      },
+      }) as T[EventName],
       listenerId,
     );
   }
@@ -142,13 +140,13 @@ export class Emitter<T extends Events> {
     if (!eventData) return;
 
     // Remove the listener from the event.
-    if (eventData.idMap.delete(listenerId)) {
+    if (eventData.m.delete(listenerId)) {
       // Invalidate the emit list.
-      eventData.emitList = null;
+      eventData.l = null;
 
       // If the event doesn't have any listeners left we can remove it from
       // the emitter (to prevent memory leaks).
-      if (!eventData.idMap.size) {
+      if (!eventData.m.size) {
         this._events.delete(eventName);
       }
     }
@@ -156,27 +154,15 @@ export class Emitter<T extends Events> {
 
   emit<EventName extends keyof T>(eventName: EventName, ...args: Parameters<T[EventName]>): void {
     const listeners = this._getListeners(eventName);
-    if (!listeners) return;
-
-    // Here we optimize the emit process by avoiding the spread operator when
-    // there are no arguments. This is a micro optimization, but it does make
-    // a difference. Also, avoid the for loop when there is only one listener.
-    const { length } = listeners;
-    if (args.length) {
-      if (length === 1) {
-        listeners[0](...(args as any[]));
-      } else {
-        let i = 0;
-        for (; i < length; i++) {
-          listeners[i](...(args as any[]));
+    if (listeners) {
+      const len = listeners.length;
+      let i = 0;
+      if (args.length) {
+        for (; i < len; i++) {
+          listeners[i](...args);
         }
-      }
-    } else {
-      if (length === 1) {
-        listeners[0]();
       } else {
-        let i = 0;
-        for (; i < length; i++) {
+        for (; i < len; i++) {
           listeners[i]();
         }
       }
@@ -186,11 +172,11 @@ export class Emitter<T extends Events> {
   listenerCount<EventName extends keyof T>(eventName?: EventName): number {
     if (eventName === undefined) {
       let count = 0;
-      this._events.forEach((_value, key) => {
-        count += this.listenerCount(key);
+      this._events.forEach((value) => {
+        count += value.m.size;
       });
       return count;
     }
-    return this._events.get(eventName)?.idMap.size || 0;
+    return this._events.get(eventName)?.m.size || 0;
   }
 }

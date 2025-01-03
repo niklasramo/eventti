@@ -70,7 +70,7 @@ However, emitting speed is on par with the fastest of emitters due to an optimiz
 
 Where things get interesting is when we start removing listeners. While most emitters need to loop an array of listeners to find the matching listener(s), Eventti can just delete the listener from the `Map` by the listener id. This is a huge performance boost when you have a lot of listeners.
 
-In practice, Eventti and most other emitters are so fast that you don't need to worry about performance. But if you're interested in the numbers, we have some [benchmarks](./benchmarks/), which you can run with `npm run test-perf`.
+In practice, Eventti and most other emitters are so fast that you don't need to worry about performance. But if you're interested in the numbers, we have some [benchmarks](./benchmarks/), which you can run with `npm run benchmark`.
 
 ## Getting started
 
