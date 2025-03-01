@@ -4,7 +4,7 @@ A _predictable_ event emitter for pragmatists, written in TypeScript.
 
 - 🔮 Predictable behaviour.
 - 🎯 Hits the sweet spot between features, size and performance.
-- 🎁 Small footprint (574 bytes minified and gzipped to be exact).
+- 🎁 Small footprint (561 bytes minified and gzipped to be exact).
 - ⚡ Highly optimized and stable performance across browsers.
 - 🤖 Extensively tested.
 - 🍭 No runtime dependencies, what you see is what you get.

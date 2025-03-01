@@ -3997,6 +3997,7 @@
     IGNORE: "ignore",
     THROW: "throw"
   };
+  var UNDEFINED;
   var Emitter = class {
     constructor(options = {}) {
       this.dedupe = options.dedupe || EmitterDedupe.ADD;
@@ -4005,7 +4006,7 @@
     }
     _getListeners(eventName) {
       const eventData = this._events.get(eventName);
-      return eventData?.m?.size ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
+      return eventData ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
     }
     on(eventName, listener, listenerId) {
       const events = this._events;
@@ -4015,7 +4016,7 @@
         events.set(eventName, eventData);
       }
       const idMap = eventData.m;
-      listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
+      listenerId = listenerId === UNDEFINED ? this.getId(listener) : listenerId;
       if (idMap.has(listenerId)) {
         switch (this.dedupe) {
           case EmitterDedupe.THROW: {
@@ -4039,13 +4040,13 @@
       return listenerId;
     }
     once(eventName, listener, listenerId) {
-      let isCalled = false;
-      listenerId = listenerId === void 0 ? this.getId(listener) : listenerId;
+      let isCalled = 0;
+      listenerId = listenerId === UNDEFINED ? this.getId(listener) : listenerId;
       return this.on(
         eventName,
         (...args) => {
           if (!isCalled) {
-            isCalled = true;
+            isCalled = 1;
             this.off(eventName, listenerId);
             listener(...args);
           }
@@ -4054,17 +4055,16 @@
       );
     }
     off(eventName, listenerId) {
-      if (eventName === void 0) {
+      if (eventName === UNDEFINED) {
         this._events.clear();
         return;
       }
-      if (listenerId === void 0) {
+      if (listenerId === UNDEFINED) {
         this._events.delete(eventName);
         return;
       }
       const eventData = this._events.get(eventName);
-      if (!eventData) return;
-      if (eventData.m.delete(listenerId)) {
+      if (eventData?.m.delete(listenerId)) {
         eventData.l = null;
         if (!eventData.m.size) {
           this._events.delete(eventName);
@@ -4088,7 +4088,7 @@
       }
     }
     listenerCount(eventName) {
-      if (eventName === void 0) {
+      if (eventName === UNDEFINED) {
         let count = 0;
         this._events.forEach((value) => {
           count += value.m.size;

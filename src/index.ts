@@ -20,6 +20,9 @@ export type EmitterOptions = {
   getId?: (listener: EventListener) => EventListenerId;
 };
 
+// This is purely a hack to save a few bytes on the bundle size.
+let UNDEFINED: undefined;
+
 export class Emitter<T extends Events> {
   dedupe: EmitterDedupe;
   getId: (listener: EventListener) => EventListenerId;
@@ -41,7 +44,7 @@ export class Emitter<T extends Events> {
     // want to do instead is to cache the emit list and only invalidate it when
     // listeners are removed.
     const eventData = this._events.get(eventName);
-    return eventData?.m?.size ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
+    return eventData ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
   }
 
   on<EventName extends keyof T>(
@@ -61,7 +64,7 @@ export class Emitter<T extends Events> {
     const idMap = eventData.m;
 
     // Create listener id if not provided.
-    listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
+    listenerId = listenerId === UNDEFINED ? this.getId(listener) : listenerId;
 
     // Handle duplicate ids.
     if (idMap.has(listenerId)) {
@@ -99,13 +102,13 @@ export class Emitter<T extends Events> {
     listener: T[EventName],
     listenerId?: EventListenerId,
   ): EventListenerId {
-    let isCalled = false;
-    listenerId = listenerId === undefined ? this.getId(listener) : listenerId;
+    let isCalled = 0;
+    listenerId = listenerId === UNDEFINED ? this.getId(listener) : listenerId;
     return this.on(
       eventName,
       ((...args) => {
         if (!isCalled) {
-          isCalled = true;
+          isCalled = 1;
           this.off(eventName, listenerId);
           listener(...args);
         }
@@ -117,24 +120,23 @@ export class Emitter<T extends Events> {
   off<EventName extends keyof T>(eventName?: EventName, listenerId?: EventListenerId): void {
     // If event name is not provided, let's remove all listeners from the
     // emitter.
-    if (eventName === undefined) {
+    if (eventName === UNDEFINED) {
       this._events.clear();
       return;
     }
 
     // If listener id is not provided, let's remove all listeners from the
     // event.
-    if (listenerId === undefined) {
+    if (listenerId === UNDEFINED) {
       this._events.delete(eventName);
       return;
     }
 
     // Get the event data.
     const eventData = this._events.get(eventName);
-    if (!eventData) return;
 
     // Remove the listener from the event.
-    if (eventData.m.delete(listenerId)) {
+    if (eventData?.m.delete(listenerId)) {
       // Invalidate the emit list.
       eventData.l = null;
 
@@ -164,7 +166,7 @@ export class Emitter<T extends Events> {
   }
 
   listenerCount<EventName extends keyof T>(eventName?: EventName): number {
-    if (eventName === undefined) {
+    if (eventName === UNDEFINED) {
       let count = 0;
       this._events.forEach((value) => {
         count += value.m.size;

@@ -31,7 +31,7 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'eventti',
+    'eventti 4.0.2',
     {
       create: () => {
         const eventti = new EventtiEmitter();
