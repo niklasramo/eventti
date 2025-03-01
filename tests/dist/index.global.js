@@ -1321,21 +1321,29 @@
   __name(Assertion, "Assertion");
   Object.defineProperty(Assertion, "includeStack", {
     get: function() {
-      console.warn("Assertion.includeStack is deprecated, use chai.config.includeStack instead.");
+      console.warn(
+        "Assertion.includeStack is deprecated, use chai.config.includeStack instead."
+      );
       return config.includeStack;
     },
     set: function(value) {
-      console.warn("Assertion.includeStack is deprecated, use chai.config.includeStack instead.");
+      console.warn(
+        "Assertion.includeStack is deprecated, use chai.config.includeStack instead."
+      );
       config.includeStack = value;
     }
   });
   Object.defineProperty(Assertion, "showDiff", {
     get: function() {
-      console.warn("Assertion.showDiff is deprecated, use chai.config.showDiff instead.");
+      console.warn(
+        "Assertion.showDiff is deprecated, use chai.config.showDiff instead."
+      );
       return config.showDiff;
     },
     set: function(value) {
-      console.warn("Assertion.showDiff is deprecated, use chai.config.showDiff instead.");
+      console.warn(
+        "Assertion.showDiff is deprecated, use chai.config.showDiff instead."
+      );
       config.showDiff = value;
     }
   });
@@ -1384,18 +1392,14 @@
       );
     }
   };
-  Object.defineProperty(
-    Assertion.prototype,
-    "_obj",
-    {
-      get: function() {
-        return flag(this, "object");
-      },
-      set: function(val) {
-        flag(this, "object", val);
-      }
+  Object.defineProperty(Assertion.prototype, "_obj", {
+    get: function() {
+      return flag(this, "object");
+    },
+    set: function(val) {
+      flag(this, "object", val);
     }
-  );
+  });
   function isProxyEnabled() {
     return config.useProxy && typeof Proxy !== "undefined" && typeof Reflect !== "undefined";
   }
@@ -1403,24 +1407,20 @@
   function addProperty(ctx, name, getter) {
     getter = getter === void 0 ? function() {
     } : getter;
-    Object.defineProperty(
-      ctx,
-      name,
-      {
-        get: /* @__PURE__ */ __name(function propertyGetter() {
-          if (!isProxyEnabled() && !flag(this, "lockSsfi")) {
-            flag(this, "ssfi", propertyGetter);
-          }
-          var result = getter.call(this);
-          if (result !== void 0)
-            return result;
-          var newAssertion = new Assertion();
-          transferFlags(this, newAssertion);
-          return newAssertion;
-        }, "propertyGetter"),
-        configurable: true
-      }
-    );
+    Object.defineProperty(ctx, name, {
+      get: /* @__PURE__ */ __name(function propertyGetter() {
+        if (!isProxyEnabled() && !flag(this, "lockSsfi")) {
+          flag(this, "ssfi", propertyGetter);
+        }
+        var result = getter.call(this);
+        if (result !== void 0)
+          return result;
+        var newAssertion = new Assertion();
+        transferFlags(this, newAssertion);
+        return newAssertion;
+      }, "propertyGetter"),
+      configurable: true
+    });
   }
   __name(addProperty, "addProperty");
   var fnLengthDesc = Object.getOwnPropertyDescriptor(function() {
@@ -1431,9 +1431,13 @@
     Object.defineProperty(fn, "length", {
       get: function() {
         if (isChainable) {
-          throw Error("Invalid Chai property: " + assertionName + '.length. Due to a compatibility issue, "length" cannot directly follow "' + assertionName + '". Use "' + assertionName + '.lengthOf" instead.');
+          throw Error(
+            "Invalid Chai property: " + assertionName + '.length. Due to a compatibility issue, "length" cannot directly follow "' + assertionName + '". Use "' + assertionName + '.lengthOf" instead.'
+          );
         }
-        throw Error("Invalid Chai property: " + assertionName + '.length. See docs for proper usage of "' + assertionName + '".');
+        throw Error(
+          "Invalid Chai property: " + assertionName + '.length. See docs for proper usage of "' + assertionName + '".'
+        );
       }
     });
     return fn;
@@ -1463,17 +1467,19 @@
       get: /* @__PURE__ */ __name(function proxyGetter(target, property) {
         if (typeof property === "string" && config.proxyExcludedKeys.indexOf(property) === -1 && !Reflect.has(target, property)) {
           if (nonChainableMethodName) {
-            throw Error("Invalid Chai property: " + nonChainableMethodName + "." + property + '. See docs for proper usage of "' + nonChainableMethodName + '".');
+            throw Error(
+              "Invalid Chai property: " + nonChainableMethodName + "." + property + '. See docs for proper usage of "' + nonChainableMethodName + '".'
+            );
           }
           var suggestion = null;
           var suggestionDistance = 4;
           getProperties(target).forEach(function(prop) {
-            if (!Object.prototype.hasOwnProperty(prop) && builtins.indexOf(prop) === -1) {
-              var dist = stringDistanceCapped(
-                property,
-                prop,
-                suggestionDistance
-              );
+            if (
+              // we actually mean to check `Object.prototype` here
+              // eslint-disable-next-line no-prototype-builtins
+              !Object.prototype.hasOwnProperty(prop) && builtins.indexOf(prop) === -1
+            ) {
+              var dist = stringDistanceCapped(property, prop, suggestionDistance);
               if (dist < suggestionDistance) {
                 suggestion = prop;
                 suggestionDistance = dist;
@@ -1481,7 +1487,9 @@
             }
           });
           if (suggestion !== null) {
-            throw Error("Invalid Chai property: " + property + '. Did you mean "' + suggestion + '"?');
+            throw Error(
+              "Invalid Chai property: " + property + '. Did you mean "' + suggestion + '"?'
+            );
           } else {
             throw Error("Invalid Chai property: " + property);
           }
@@ -1499,16 +1507,16 @@
       return cap;
     }
     var memo = [];
-    for (var i = 0; i <= strA.length; i++) {
+    for (let i = 0; i <= strA.length; i++) {
       memo[i] = Array(strB.length + 1).fill(0);
       memo[i][0] = i;
     }
-    for (var j = 0; j < strB.length; j++) {
+    for (let j = 0; j < strB.length; j++) {
       memo[0][j] = j;
     }
-    for (var i = 1; i <= strA.length; i++) {
+    for (let i = 1; i <= strA.length; i++) {
       var ch = strA.charCodeAt(i - 1);
-      for (var j = 1; j <= strB.length; j++) {
+      for (let j = 1; j <= strB.length; j++) {
         if (Math.abs(i - j) >= cap) {
           memo[i][j] = cap;
           continue;
@@ -1544,28 +1552,24 @@
     }, "_super");
     if (_get && "function" === typeof _get.get)
       _super = _get.get;
-    Object.defineProperty(
-      ctx,
-      name,
-      {
-        get: /* @__PURE__ */ __name(function overwritingPropertyGetter() {
-          if (!isProxyEnabled() && !flag(this, "lockSsfi")) {
-            flag(this, "ssfi", overwritingPropertyGetter);
-          }
-          var origLockSsfi = flag(this, "lockSsfi");
-          flag(this, "lockSsfi", true);
-          var result = getter(_super).call(this);
-          flag(this, "lockSsfi", origLockSsfi);
-          if (result !== void 0) {
-            return result;
-          }
-          var newAssertion = new Assertion();
-          transferFlags(this, newAssertion);
-          return newAssertion;
-        }, "overwritingPropertyGetter"),
-        configurable: true
-      }
-    );
+    Object.defineProperty(ctx, name, {
+      get: /* @__PURE__ */ __name(function overwritingPropertyGetter() {
+        if (!isProxyEnabled() && !flag(this, "lockSsfi")) {
+          flag(this, "ssfi", overwritingPropertyGetter);
+        }
+        var origLockSsfi = flag(this, "lockSsfi");
+        flag(this, "lockSsfi", true);
+        var result = getter(_super).call(this);
+        flag(this, "lockSsfi", origLockSsfi);
+        if (result !== void 0) {
+          return result;
+        }
+        var newAssertion = new Assertion();
+        transferFlags(this, newAssertion);
+        return newAssertion;
+      }, "overwritingPropertyGetter"),
+      configurable: true
+    });
   }
   __name(overwriteProperty, "overwriteProperty");
   function overwriteMethod(ctx, name, method) {
@@ -1617,46 +1621,42 @@
       ctx.__methods = {};
     }
     ctx.__methods[name] = chainableBehavior;
-    Object.defineProperty(
-      ctx,
-      name,
-      {
-        get: /* @__PURE__ */ __name(function chainableMethodGetter() {
-          chainableBehavior.chainingBehavior.call(this);
-          var chainableMethodWrapper = /* @__PURE__ */ __name(function() {
-            if (!flag(this, "lockSsfi")) {
-              flag(this, "ssfi", chainableMethodWrapper);
-            }
-            var result = chainableBehavior.method.apply(this, arguments);
-            if (result !== void 0) {
-              return result;
-            }
-            var newAssertion = new Assertion();
-            transferFlags(this, newAssertion);
-            return newAssertion;
-          }, "chainableMethodWrapper");
-          addLengthGuard(chainableMethodWrapper, name, true);
-          if (canSetPrototype) {
-            var prototype = Object.create(this);
-            prototype.call = call;
-            prototype.apply = apply;
-            Object.setPrototypeOf(chainableMethodWrapper, prototype);
-          } else {
-            var asserterNames = Object.getOwnPropertyNames(ctx);
-            asserterNames.forEach(function(asserterName) {
-              if (excludeNames.indexOf(asserterName) !== -1) {
-                return;
-              }
-              var pd = Object.getOwnPropertyDescriptor(ctx, asserterName);
-              Object.defineProperty(chainableMethodWrapper, asserterName, pd);
-            });
+    Object.defineProperty(ctx, name, {
+      get: /* @__PURE__ */ __name(function chainableMethodGetter() {
+        chainableBehavior.chainingBehavior.call(this);
+        var chainableMethodWrapper = /* @__PURE__ */ __name(function() {
+          if (!flag(this, "lockSsfi")) {
+            flag(this, "ssfi", chainableMethodWrapper);
           }
-          transferFlags(this, chainableMethodWrapper);
-          return proxify(chainableMethodWrapper);
-        }, "chainableMethodGetter"),
-        configurable: true
-      }
-    );
+          var result = chainableBehavior.method.apply(this, arguments);
+          if (result !== void 0) {
+            return result;
+          }
+          var newAssertion = new Assertion();
+          transferFlags(this, newAssertion);
+          return newAssertion;
+        }, "chainableMethodWrapper");
+        addLengthGuard(chainableMethodWrapper, name, true);
+        if (canSetPrototype) {
+          var prototype = Object.create(this);
+          prototype.call = call;
+          prototype.apply = apply;
+          Object.setPrototypeOf(chainableMethodWrapper, prototype);
+        } else {
+          var asserterNames = Object.getOwnPropertyNames(ctx);
+          asserterNames.forEach(function(asserterName) {
+            if (excludeNames.indexOf(asserterName) !== -1) {
+              return;
+            }
+            var pd = Object.getOwnPropertyDescriptor(ctx, asserterName);
+            Object.defineProperty(chainableMethodWrapper, asserterName, pd);
+          });
+        }
+        transferFlags(this, chainableMethodWrapper);
+        return proxify(chainableMethodWrapper);
+      }, "chainableMethodGetter"),
+      configurable: true
+    });
   }
   __name(addChainableMethod, "addChainableMethod");
   function overwriteChainableMethod(ctx, name, method, chainingBehavior) {
@@ -1699,11 +1699,7 @@
     return Object.keys(obj).concat(getOwnEnumerablePropertySymbols(obj));
   }
   __name(getOwnEnumerableProperties, "getOwnEnumerableProperties");
-  function _isNaN(value) {
-    return value !== value;
-  }
-  __name(_isNaN, "_isNaN");
-  var isNaN2 = Number.isNaN || _isNaN;
+  var isNaN2 = Number.isNaN;
   function isObjectType(obj) {
     var objectType = type(obj);
     var objectTypes = ["Array", "Object", "Function"];
@@ -1792,10 +1788,15 @@
     flag2(this, "any", false);
   });
   var functionTypes = {
-    "function": ["function", "asyncfunction", "generatorfunction", "asyncgeneratorfunction"],
-    "asyncfunction": ["asyncfunction", "asyncgeneratorfunction"],
-    "generatorfunction": ["generatorfunction", "asyncgeneratorfunction"],
-    "asyncgeneratorfunction": ["asyncgeneratorfunction"]
+    function: [
+      "function",
+      "asyncfunction",
+      "generatorfunction",
+      "asyncgeneratorfunction"
+    ],
+    asyncfunction: ["asyncfunction", "asyncgeneratorfunction"],
+    generatorfunction: ["generatorfunction", "asyncgeneratorfunction"],
+    asyncgeneratorfunction: ["asyncgeneratorfunction"]
   };
   function an(type3, msg) {
     if (msg)
@@ -1946,13 +1947,14 @@
     const msg = message ? `${message}: ` : "";
     const negate = flag2(this, "negate");
     const assertionMessage = negate ? `${msg}expected ${inspect2(val)} not to be a callable function` : `${msg}expected ${inspect2(val)} to be a callable function`;
-    const isCallable = ["Function", "AsyncFunction", "GeneratorFunction", "AsyncGeneratorFunction"].includes(type(val));
+    const isCallable = [
+      "Function",
+      "AsyncFunction",
+      "GeneratorFunction",
+      "AsyncGeneratorFunction"
+    ].includes(type(val));
     if (isCallable && negate || !isCallable && !negate) {
-      throw new AssertionError(
-        assertionMessage,
-        void 0,
-        ssfi
-      );
+      throw new AssertionError(assertionMessage, void 0, ssfi);
     }
   });
   Assertion.addProperty("false", function() {
@@ -2091,13 +2093,25 @@
     if (doLength && objType !== "map" && objType !== "set") {
       new Assertion(obj, flagMsg, ssfi, true).to.have.property("length");
     }
-    if (!doLength && (objType === "date" && nType !== "date")) {
-      throw new AssertionError(msgPrefix + "the argument to above must be a date", void 0, ssfi);
+    if (!doLength && objType === "date" && nType !== "date") {
+      throw new AssertionError(
+        msgPrefix + "the argument to above must be a date",
+        void 0,
+        ssfi
+      );
     } else if (!isNumeric(n) && (doLength || isNumeric(obj))) {
-      throw new AssertionError(msgPrefix + "the argument to above must be a number", void 0, ssfi);
-    } else if (!doLength && (objType !== "date" && !isNumeric(obj))) {
+      throw new AssertionError(
+        msgPrefix + "the argument to above must be a number",
+        void 0,
+        ssfi
+      );
+    } else if (!doLength && objType !== "date" && !isNumeric(obj)) {
       var printObj = objType === "string" ? "'" + obj + "'" : obj;
-      throw new AssertionError(msgPrefix + "expected " + printObj + " to be a number or a date", void 0, ssfi);
+      throw new AssertionError(
+        msgPrefix + "expected " + printObj + " to be a number or a date",
+        void 0,
+        ssfi
+      );
     }
     if (doLength) {
       var descriptor = "length", itemsCount;
@@ -2134,11 +2148,11 @@
     if (doLength && objType !== "map" && objType !== "set") {
       new Assertion(obj, flagMsg, ssfi, true).to.have.property("length");
     }
-    if (!doLength && (objType === "date" && nType !== "date")) {
+    if (!doLength && objType === "date" && nType !== "date") {
       errorMessage = msgPrefix + "the argument to least must be a date";
     } else if (!isNumeric(n) && (doLength || isNumeric(obj))) {
       errorMessage = msgPrefix + "the argument to least must be a number";
-    } else if (!doLength && (objType !== "date" && !isNumeric(obj))) {
+    } else if (!doLength && objType !== "date" && !isNumeric(obj)) {
       var printObj = objType === "string" ? "'" + obj + "'" : obj;
       errorMessage = msgPrefix + "expected " + printObj + " to be a number or a date";
     } else {
@@ -2182,11 +2196,11 @@
     if (doLength && objType !== "map" && objType !== "set") {
       new Assertion(obj, flagMsg, ssfi, true).to.have.property("length");
     }
-    if (!doLength && (objType === "date" && nType !== "date")) {
+    if (!doLength && objType === "date" && nType !== "date") {
       errorMessage = msgPrefix + "the argument to below must be a date";
     } else if (!isNumeric(n) && (doLength || isNumeric(obj))) {
       errorMessage = msgPrefix + "the argument to below must be a number";
-    } else if (!doLength && (objType !== "date" && !isNumeric(obj))) {
+    } else if (!doLength && objType !== "date" && !isNumeric(obj)) {
       var printObj = objType === "string" ? "'" + obj + "'" : obj;
       errorMessage = msgPrefix + "expected " + printObj + " to be a number or a date";
     } else {
@@ -2230,11 +2244,11 @@
     if (doLength && objType !== "map" && objType !== "set") {
       new Assertion(obj, flagMsg, ssfi, true).to.have.property("length");
     }
-    if (!doLength && (objType === "date" && nType !== "date")) {
+    if (!doLength && objType === "date" && nType !== "date") {
       errorMessage = msgPrefix + "the argument to most must be a date";
     } else if (!isNumeric(n) && (doLength || isNumeric(obj))) {
       errorMessage = msgPrefix + "the argument to most must be a number";
-    } else if (!doLength && (objType !== "date" && !isNumeric(obj))) {
+    } else if (!doLength && objType !== "date" && !isNumeric(obj)) {
       var printObj = objType === "string" ? "'" + obj + "'" : obj;
       errorMessage = msgPrefix + "expected " + printObj + " to be a number or a date";
     } else {
@@ -2278,11 +2292,11 @@
     if (doLength && objType !== "map" && objType !== "set") {
       new Assertion(obj, flagMsg, ssfi, true).to.have.property("length");
     }
-    if (!doLength && (objType === "date" && (startType !== "date" || finishType !== "date"))) {
+    if (!doLength && objType === "date" && (startType !== "date" || finishType !== "date")) {
       errorMessage = msgPrefix + "the arguments to within must be dates";
     } else if ((!isNumeric(start) || !isNumeric(finish)) && (doLength || isNumeric(obj))) {
       errorMessage = msgPrefix + "the arguments to within must be numbers";
-    } else if (!doLength && (objType !== "date" && !isNumeric(obj))) {
+    } else if (!doLength && objType !== "date" && !isNumeric(obj)) {
       var printObj = objType === "string" ? "'" + obj + "'" : obj;
       errorMessage = msgPrefix + "expected " + printObj + " to be a number or a date";
     } else {
@@ -2416,7 +2430,7 @@
   }
   __name(assertProperty, "assertProperty");
   Assertion.addMethod("property", assertProperty);
-  function assertOwnProperty(name, value, msg) {
+  function assertOwnProperty(_name, _value, _msg) {
     flag2(this, "own", true);
     assertProperty.apply(this, arguments);
   }
@@ -2642,7 +2656,10 @@
     }
     if (errorLike && caughtErr) {
       if (errorLike instanceof Error) {
-        var isCompatibleInstance = check_error_exports.compatibleInstance(caughtErr, errorLike);
+        var isCompatibleInstance = check_error_exports.compatibleInstance(
+          caughtErr,
+          errorLike
+        );
         if (isCompatibleInstance === negate) {
           if (everyArgIsDefined && negate) {
             errorLikeFail = true;
@@ -2657,7 +2674,10 @@
           }
         }
       }
-      var isCompatibleConstructor = check_error_exports.compatibleConstructor(caughtErr, errorLike);
+      var isCompatibleConstructor = check_error_exports.compatibleConstructor(
+        caughtErr,
+        errorLike
+      );
       if (isCompatibleConstructor === negate) {
         if (everyArgIsDefined && negate) {
           errorLikeFail = true;
@@ -2677,7 +2697,10 @@
       if (isRegExp2(errMsgMatcher)) {
         placeholder = "matching";
       }
-      var isCompatibleMessage = check_error_exports.compatibleMessage(caughtErr, errMsgMatcher);
+      var isCompatibleMessage = check_error_exports.compatibleMessage(
+        caughtErr,
+        errMsgMatcher
+      );
       if (isCompatibleMessage === negate) {
         if (everyArgIsDefined && negate) {
           errMsgMatcherFail = true;
@@ -2746,15 +2769,24 @@
     new Assertion(obj, flagMsg, ssfi, true).is.numeric;
     let message = "A `delta` value is required for `closeTo`";
     if (delta == void 0)
-      throw new AssertionError(flagMsg ? `${flagMsg}: ${message}` : message, void 0, ssfi);
+      throw new AssertionError(
+        flagMsg ? `${flagMsg}: ${message}` : message,
+        void 0,
+        ssfi
+      );
     new Assertion(delta, flagMsg, ssfi, true).is.numeric;
     message = "A `expected` value is required for `closeTo`";
     if (expected == void 0)
-      throw new AssertionError(flagMsg ? `${flagMsg}: ${message}` : message, void 0, ssfi);
+      throw new AssertionError(
+        flagMsg ? `${flagMsg}: ${message}` : message,
+        void 0,
+        ssfi
+      );
     new Assertion(expected, flagMsg, ssfi, true).is.numeric;
     const abs = /* @__PURE__ */ __name((x) => x < 0n ? -x : x, "abs");
+    const strip = /* @__PURE__ */ __name((number) => parseFloat(parseFloat(number).toPrecision(12)), "strip");
     this.assert(
-      abs(obj - expected) <= delta,
+      strip(abs(obj - expected)) <= delta,
       "expected #{this} to be close to " + expected + " +/- " + delta,
       "expected #{this} not to be close to " + expected + " +/- " + delta
     );
@@ -3010,12 +3042,67 @@
       "expected #{this} to not be frozen"
     );
   });
-  Assertion.addProperty("finite", function(msg) {
+  Assertion.addProperty("finite", function(_msg) {
     var obj = flag2(this, "object");
     this.assert(
       typeof obj === "number" && isFinite(obj),
       "expected #{this} to be a finite number",
       "expected #{this} to not be a finite number"
+    );
+  });
+  function compareSubset(expected, actual) {
+    if (expected === actual) {
+      return true;
+    }
+    if (typeof actual !== typeof expected) {
+      return false;
+    }
+    if (typeof expected !== "object" || expected === null) {
+      return expected === actual;
+    }
+    if (!actual) {
+      return false;
+    }
+    if (Array.isArray(expected)) {
+      if (!Array.isArray(actual)) {
+        return false;
+      }
+      return expected.every(function(exp) {
+        return actual.some(function(act) {
+          return compareSubset(exp, act);
+        });
+      });
+    }
+    if (expected instanceof Date) {
+      if (actual instanceof Date) {
+        return expected.getTime() === actual.getTime();
+      } else {
+        return false;
+      }
+    }
+    return Object.keys(expected).every(function(key) {
+      var expectedValue = expected[key];
+      var actualValue = actual[key];
+      if (typeof expectedValue === "object" && expectedValue !== null && actualValue !== null) {
+        return compareSubset(expectedValue, actualValue);
+      }
+      if (typeof expectedValue === "function") {
+        return expectedValue(actualValue);
+      }
+      return actualValue === expectedValue;
+    });
+  }
+  __name(compareSubset, "compareSubset");
+  Assertion.addMethod("containSubset", function(expected) {
+    const actual = flag(this, "object");
+    const showDiff = config.showDiff;
+    this.assert(
+      compareSubset(expected, actual),
+      "expected #{act} to contain subset #{exp}",
+      "expected #{act} to not contain subset #{exp}",
+      expected,
+      actual,
+      showDiff
     );
   });
   function expect(val, message) {
@@ -3028,11 +3115,15 @@
       actual = void 0;
     }
     message = message || "expect.fail()";
-    throw new AssertionError(message, {
-      actual,
-      expected,
-      operator
-    }, expect.fail);
+    throw new AssertionError(
+      message,
+      {
+        actual,
+        expected,
+        operator
+      },
+      expect.fail
+    );
   };
   var should_exports = {};
   __export(should_exports, {
@@ -3068,11 +3159,15 @@
         actual = void 0;
       }
       message = message || "should.fail()";
-      throw new AssertionError(message, {
-        actual,
-        expected,
-        operator
-      }, should2.fail);
+      throw new AssertionError(
+        message,
+        {
+          actual,
+          expected,
+          operator
+        },
+        should2.fail
+      );
     };
     should2.equal = function(actual, expected, message) {
       new Assertion(actual, message).to.equal(expected);
@@ -3102,11 +3197,7 @@
   var Should = loadShould;
   function assert(express, errmsg) {
     var test2 = new Assertion(null, null, assert, true);
-    test2.assert(
-      express,
-      errmsg,
-      "[ negation message unavailable ]"
-    );
+    test2.assert(express, errmsg, "[ negation message unavailable ]");
   }
   __name(assert, "assert");
   assert.fail = function(actual, expected, message, operator) {
@@ -3115,11 +3206,15 @@
       actual = void 0;
     }
     message = message || "assert.fail()";
-    throw new AssertionError(message, {
-      actual,
-      expected,
-      operator
-    }, assert.fail);
+    throw new AssertionError(
+      message,
+      {
+        actual,
+        expected,
+        operator
+      },
+      assert.fail
+    );
   };
   assert.isOk = function(val, msg) {
     new Assertion(val, msg, assert.isOk, true).is.ok;
@@ -3264,7 +3359,9 @@
     new Assertion(val, msg, assert.instanceOf, true).to.be.instanceOf(type3);
   };
   assert.notInstanceOf = function(val, type3, msg) {
-    new Assertion(val, msg, assert.notInstanceOf, true).to.not.be.instanceOf(type3);
+    new Assertion(val, msg, assert.notInstanceOf, true).to.not.be.instanceOf(
+      type3
+    );
   };
   assert.include = function(exp, inc, msg) {
     new Assertion(exp, msg, assert.include, true).include(inc);
@@ -3282,13 +3379,22 @@
     new Assertion(exp, msg, assert.nestedInclude, true).nested.include(inc);
   };
   assert.notNestedInclude = function(exp, inc, msg) {
-    new Assertion(exp, msg, assert.notNestedInclude, true).not.nested.include(inc);
+    new Assertion(exp, msg, assert.notNestedInclude, true).not.nested.include(
+      inc
+    );
   };
   assert.deepNestedInclude = function(exp, inc, msg) {
-    new Assertion(exp, msg, assert.deepNestedInclude, true).deep.nested.include(inc);
+    new Assertion(exp, msg, assert.deepNestedInclude, true).deep.nested.include(
+      inc
+    );
   };
   assert.notDeepNestedInclude = function(exp, inc, msg) {
-    new Assertion(exp, msg, assert.notDeepNestedInclude, true).not.deep.nested.include(inc);
+    new Assertion(
+      exp,
+      msg,
+      assert.notDeepNestedInclude,
+      true
+    ).not.deep.nested.include(inc);
   };
   assert.ownInclude = function(exp, inc, msg) {
     new Assertion(exp, msg, assert.ownInclude, true).own.include(inc);
@@ -3300,7 +3406,9 @@
     new Assertion(exp, msg, assert.deepOwnInclude, true).deep.own.include(inc);
   };
   assert.notDeepOwnInclude = function(exp, inc, msg) {
-    new Assertion(exp, msg, assert.notDeepOwnInclude, true).not.deep.own.include(inc);
+    new Assertion(exp, msg, assert.notDeepOwnInclude, true).not.deep.own.include(
+      inc
+    );
   };
   assert.match = function(exp, re, msg) {
     new Assertion(exp, msg, assert.match, true).to.match(re);
@@ -3318,49 +3426,107 @@
     new Assertion(obj, msg, assert.propertyVal, true).to.have.property(prop, val);
   };
   assert.notPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.notPropertyVal, true).to.not.have.property(prop, val);
+    new Assertion(obj, msg, assert.notPropertyVal, true).to.not.have.property(
+      prop,
+      val
+    );
   };
   assert.deepPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.deepPropertyVal, true).to.have.deep.property(prop, val);
+    new Assertion(obj, msg, assert.deepPropertyVal, true).to.have.deep.property(
+      prop,
+      val
+    );
   };
   assert.notDeepPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.notDeepPropertyVal, true).to.not.have.deep.property(prop, val);
+    new Assertion(
+      obj,
+      msg,
+      assert.notDeepPropertyVal,
+      true
+    ).to.not.have.deep.property(prop, val);
   };
   assert.ownProperty = function(obj, prop, msg) {
     new Assertion(obj, msg, assert.ownProperty, true).to.have.own.property(prop);
   };
   assert.notOwnProperty = function(obj, prop, msg) {
-    new Assertion(obj, msg, assert.notOwnProperty, true).to.not.have.own.property(prop);
+    new Assertion(obj, msg, assert.notOwnProperty, true).to.not.have.own.property(
+      prop
+    );
   };
   assert.ownPropertyVal = function(obj, prop, value, msg) {
-    new Assertion(obj, msg, assert.ownPropertyVal, true).to.have.own.property(prop, value);
+    new Assertion(obj, msg, assert.ownPropertyVal, true).to.have.own.property(
+      prop,
+      value
+    );
   };
   assert.notOwnPropertyVal = function(obj, prop, value, msg) {
-    new Assertion(obj, msg, assert.notOwnPropertyVal, true).to.not.have.own.property(prop, value);
+    new Assertion(
+      obj,
+      msg,
+      assert.notOwnPropertyVal,
+      true
+    ).to.not.have.own.property(prop, value);
   };
   assert.deepOwnPropertyVal = function(obj, prop, value, msg) {
-    new Assertion(obj, msg, assert.deepOwnPropertyVal, true).to.have.deep.own.property(prop, value);
+    new Assertion(
+      obj,
+      msg,
+      assert.deepOwnPropertyVal,
+      true
+    ).to.have.deep.own.property(prop, value);
   };
   assert.notDeepOwnPropertyVal = function(obj, prop, value, msg) {
-    new Assertion(obj, msg, assert.notDeepOwnPropertyVal, true).to.not.have.deep.own.property(prop, value);
+    new Assertion(
+      obj,
+      msg,
+      assert.notDeepOwnPropertyVal,
+      true
+    ).to.not.have.deep.own.property(prop, value);
   };
   assert.nestedProperty = function(obj, prop, msg) {
-    new Assertion(obj, msg, assert.nestedProperty, true).to.have.nested.property(prop);
+    new Assertion(obj, msg, assert.nestedProperty, true).to.have.nested.property(
+      prop
+    );
   };
   assert.notNestedProperty = function(obj, prop, msg) {
-    new Assertion(obj, msg, assert.notNestedProperty, true).to.not.have.nested.property(prop);
+    new Assertion(
+      obj,
+      msg,
+      assert.notNestedProperty,
+      true
+    ).to.not.have.nested.property(prop);
   };
   assert.nestedPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.nestedPropertyVal, true).to.have.nested.property(prop, val);
+    new Assertion(
+      obj,
+      msg,
+      assert.nestedPropertyVal,
+      true
+    ).to.have.nested.property(prop, val);
   };
   assert.notNestedPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.notNestedPropertyVal, true).to.not.have.nested.property(prop, val);
+    new Assertion(
+      obj,
+      msg,
+      assert.notNestedPropertyVal,
+      true
+    ).to.not.have.nested.property(prop, val);
   };
   assert.deepNestedPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.deepNestedPropertyVal, true).to.have.deep.nested.property(prop, val);
+    new Assertion(
+      obj,
+      msg,
+      assert.deepNestedPropertyVal,
+      true
+    ).to.have.deep.nested.property(prop, val);
   };
   assert.notDeepNestedPropertyVal = function(obj, prop, val, msg) {
-    new Assertion(obj, msg, assert.notDeepNestedPropertyVal, true).to.not.have.deep.nested.property(prop, val);
+    new Assertion(
+      obj,
+      msg,
+      assert.notDeepNestedPropertyVal,
+      true
+    ).to.not.have.deep.nested.property(prop, val);
   };
   assert.lengthOf = function(exp, len, msg) {
     new Assertion(exp, msg, assert.lengthOf, true).to.have.lengthOf(len);
@@ -3372,35 +3538,63 @@
     new Assertion(obj, msg, assert.hasAllKeys, true).to.have.all.keys(keys);
   };
   assert.containsAllKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.containsAllKeys, true).to.contain.all.keys(keys);
+    new Assertion(obj, msg, assert.containsAllKeys, true).to.contain.all.keys(
+      keys
+    );
   };
   assert.doesNotHaveAnyKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.doesNotHaveAnyKeys, true).to.not.have.any.keys(keys);
+    new Assertion(obj, msg, assert.doesNotHaveAnyKeys, true).to.not.have.any.keys(
+      keys
+    );
   };
   assert.doesNotHaveAllKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.doesNotHaveAllKeys, true).to.not.have.all.keys(keys);
+    new Assertion(obj, msg, assert.doesNotHaveAllKeys, true).to.not.have.all.keys(
+      keys
+    );
   };
   assert.hasAnyDeepKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.hasAnyDeepKeys, true).to.have.any.deep.keys(keys);
+    new Assertion(obj, msg, assert.hasAnyDeepKeys, true).to.have.any.deep.keys(
+      keys
+    );
   };
   assert.hasAllDeepKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.hasAllDeepKeys, true).to.have.all.deep.keys(keys);
+    new Assertion(obj, msg, assert.hasAllDeepKeys, true).to.have.all.deep.keys(
+      keys
+    );
   };
   assert.containsAllDeepKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.containsAllDeepKeys, true).to.contain.all.deep.keys(keys);
+    new Assertion(
+      obj,
+      msg,
+      assert.containsAllDeepKeys,
+      true
+    ).to.contain.all.deep.keys(keys);
   };
   assert.doesNotHaveAnyDeepKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.doesNotHaveAnyDeepKeys, true).to.not.have.any.deep.keys(keys);
+    new Assertion(
+      obj,
+      msg,
+      assert.doesNotHaveAnyDeepKeys,
+      true
+    ).to.not.have.any.deep.keys(keys);
   };
   assert.doesNotHaveAllDeepKeys = function(obj, keys, msg) {
-    new Assertion(obj, msg, assert.doesNotHaveAllDeepKeys, true).to.not.have.all.deep.keys(keys);
+    new Assertion(
+      obj,
+      msg,
+      assert.doesNotHaveAllDeepKeys,
+      true
+    ).to.not.have.all.deep.keys(keys);
   };
   assert.throws = function(fn, errorLike, errMsgMatcher, msg) {
     if ("string" === typeof errorLike || errorLike instanceof RegExp) {
       errMsgMatcher = errorLike;
       errorLike = null;
     }
-    var assertErr = new Assertion(fn, msg, assert.throws, true).to.throw(errorLike, errMsgMatcher);
+    var assertErr = new Assertion(fn, msg, assert.throws, true).to.throw(
+      errorLike,
+      errMsgMatcher
+    );
     return flag(assertErr, "object");
   };
   assert.doesNotThrow = function(fn, errorLike, errMsgMatcher, message) {
@@ -3408,7 +3602,10 @@
       errMsgMatcher = errorLike;
       errorLike = null;
     }
-    new Assertion(fn, message, assert.doesNotThrow, true).to.not.throw(errorLike, errMsgMatcher);
+    new Assertion(fn, message, assert.doesNotThrow, true).to.not.throw(
+      errorLike,
+      errMsgMatcher
+    );
   };
   assert.operator = function(val, operator, val2, msg) {
     var ok;
@@ -3456,55 +3653,130 @@
     new Assertion(act, msg, assert.closeTo, true).to.be.closeTo(exp, delta);
   };
   assert.approximately = function(act, exp, delta, msg) {
-    new Assertion(act, msg, assert.approximately, true).to.be.approximately(exp, delta);
+    new Assertion(act, msg, assert.approximately, true).to.be.approximately(
+      exp,
+      delta
+    );
   };
   assert.sameMembers = function(set1, set2, msg) {
     new Assertion(set1, msg, assert.sameMembers, true).to.have.same.members(set2);
   };
   assert.notSameMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.notSameMembers, true).to.not.have.same.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.notSameMembers,
+      true
+    ).to.not.have.same.members(set2);
   };
   assert.sameDeepMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.sameDeepMembers, true).to.have.same.deep.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.sameDeepMembers,
+      true
+    ).to.have.same.deep.members(set2);
   };
   assert.notSameDeepMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.notSameDeepMembers, true).to.not.have.same.deep.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.notSameDeepMembers,
+      true
+    ).to.not.have.same.deep.members(set2);
   };
   assert.sameOrderedMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.sameOrderedMembers, true).to.have.same.ordered.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.sameOrderedMembers,
+      true
+    ).to.have.same.ordered.members(set2);
   };
   assert.notSameOrderedMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.notSameOrderedMembers, true).to.not.have.same.ordered.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.notSameOrderedMembers,
+      true
+    ).to.not.have.same.ordered.members(set2);
   };
   assert.sameDeepOrderedMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.sameDeepOrderedMembers, true).to.have.same.deep.ordered.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.sameDeepOrderedMembers,
+      true
+    ).to.have.same.deep.ordered.members(set2);
   };
   assert.notSameDeepOrderedMembers = function(set1, set2, msg) {
-    new Assertion(set1, msg, assert.notSameDeepOrderedMembers, true).to.not.have.same.deep.ordered.members(set2);
+    new Assertion(
+      set1,
+      msg,
+      assert.notSameDeepOrderedMembers,
+      true
+    ).to.not.have.same.deep.ordered.members(set2);
   };
   assert.includeMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.includeMembers, true).to.include.members(subset);
+    new Assertion(superset, msg, assert.includeMembers, true).to.include.members(
+      subset
+    );
   };
   assert.notIncludeMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.notIncludeMembers, true).to.not.include.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.notIncludeMembers,
+      true
+    ).to.not.include.members(subset);
   };
   assert.includeDeepMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.includeDeepMembers, true).to.include.deep.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.includeDeepMembers,
+      true
+    ).to.include.deep.members(subset);
   };
   assert.notIncludeDeepMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.notIncludeDeepMembers, true).to.not.include.deep.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.notIncludeDeepMembers,
+      true
+    ).to.not.include.deep.members(subset);
   };
   assert.includeOrderedMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.includeOrderedMembers, true).to.include.ordered.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.includeOrderedMembers,
+      true
+    ).to.include.ordered.members(subset);
   };
   assert.notIncludeOrderedMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.notIncludeOrderedMembers, true).to.not.include.ordered.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.notIncludeOrderedMembers,
+      true
+    ).to.not.include.ordered.members(subset);
   };
   assert.includeDeepOrderedMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.includeDeepOrderedMembers, true).to.include.deep.ordered.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.includeDeepOrderedMembers,
+      true
+    ).to.include.deep.ordered.members(subset);
   };
   assert.notIncludeDeepOrderedMembers = function(superset, subset, msg) {
-    new Assertion(superset, msg, assert.notIncludeDeepOrderedMembers, true).to.not.include.deep.ordered.members(subset);
+    new Assertion(
+      superset,
+      msg,
+      assert.notIncludeDeepOrderedMembers,
+      true
+    ).to.not.include.deep.ordered.members(subset);
   };
   assert.oneOf = function(inList, list, msg) {
     new Assertion(inList, msg, assert.oneOf, true).to.be.oneOf(list);
@@ -3512,11 +3784,7 @@
   assert.isIterable = function(obj, msg) {
     if (obj == void 0 || !obj[Symbol.iterator]) {
       msg = msg ? `${msg} expected ${inspect2(obj)} to be an iterable` : `expected ${inspect2(obj)} to be an iterable`;
-      throw new AssertionError(
-        msg,
-        void 0,
-        assert.isIterable
-      );
+      throw new AssertionError(msg, void 0, assert.isIterable);
     }
   };
   assert.changes = function(fn, obj, prop, msg) {
@@ -3542,7 +3810,10 @@
       msg = prop;
       prop = null;
     }
-    return new Assertion(fn, msg, assert.doesNotChange, true).to.not.change(obj, prop);
+    return new Assertion(fn, msg, assert.doesNotChange, true).to.not.change(
+      obj,
+      prop
+    );
   };
   assert.changesButNotBy = function(fn, obj, prop, delta, msg) {
     if (arguments.length === 4 && typeof obj === "function") {
@@ -3578,7 +3849,10 @@
       msg = prop;
       prop = null;
     }
-    return new Assertion(fn, msg, assert.doesNotIncrease, true).to.not.increase(obj, prop);
+    return new Assertion(fn, msg, assert.doesNotIncrease, true).to.not.increase(
+      obj,
+      prop
+    );
   };
   assert.increasesButNotBy = function(fn, obj, prop, delta, msg) {
     if (arguments.length === 4 && typeof obj === "function") {
@@ -3614,7 +3888,10 @@
       msg = prop;
       prop = null;
     }
-    return new Assertion(fn, msg, assert.doesNotDecrease, true).to.not.decrease(obj, prop);
+    return new Assertion(fn, msg, assert.doesNotDecrease, true).to.not.decrease(
+      obj,
+      prop
+    );
   };
   assert.doesNotDecreaseBy = function(fn, obj, prop, delta, msg) {
     if (arguments.length === 4 && typeof obj === "function") {
@@ -3667,13 +3944,36 @@
   assert.isNotEmpty = function(val, msg) {
     new Assertion(val, msg, assert.isNotEmpty, true).to.not.be.empty;
   };
-  (/* @__PURE__ */ __name(function alias(name, as) {
+  assert.containsSubset = function(val, exp, msg) {
+    new Assertion(val, msg).to.containSubset(exp);
+  };
+  assert.doesNotContainSubset = function(val, exp, msg) {
+    new Assertion(val, msg).to.not.containSubset(exp);
+  };
+  var aliases = [
+    ["isOk", "ok"],
+    ["isNotOk", "notOk"],
+    ["throws", "throw"],
+    ["throws", "Throw"],
+    ["isExtensible", "extensible"],
+    ["isNotExtensible", "notExtensible"],
+    ["isSealed", "sealed"],
+    ["isNotSealed", "notSealed"],
+    ["isFrozen", "frozen"],
+    ["isNotFrozen", "notFrozen"],
+    ["isEmpty", "empty"],
+    ["isNotEmpty", "notEmpty"],
+    ["isCallable", "isFunction"],
+    ["isNotCallable", "isNotFunction"],
+    ["containsSubset", "containSubset"]
+  ];
+  for (const [name, as] of aliases) {
     assert[as] = assert[name];
-    return alias;
-  }, "alias"))("isOk", "ok")("isNotOk", "notOk")("throws", "throw")("throws", "Throw")("isExtensible", "extensible")("isNotExtensible", "notExtensible")("isSealed", "sealed")("isNotSealed", "notSealed")("isFrozen", "frozen")("isNotFrozen", "notFrozen")("isEmpty", "empty")("isNotEmpty", "notEmpty")("isCallable", "isFunction")("isNotCallable", "isNotFunction");
+  }
   var used = [];
   function use(fn) {
     const exports = {
+      use,
       AssertionError,
       util: utils_exports,
       config,
@@ -3705,13 +4005,7 @@
     }
     _getListeners(eventName) {
       const eventData = this._events.get(eventName);
-      if (eventData) {
-        const idMap = eventData.m;
-        if (idMap.size) {
-          return eventData.l = eventData.l || [...idMap.values()];
-        }
-      }
-      return null;
+      return eventData?.m?.size ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
     }
     on(eventName, listener, listenerId) {
       const events = this._events;

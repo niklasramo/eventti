@@ -41,13 +41,7 @@ export class Emitter<T extends Events> {
     // want to do instead is to cache the emit list and only invalidate it when
     // listeners are removed.
     const eventData = this._events.get(eventName);
-    if (eventData) {
-      const idMap = eventData.m;
-      if (idMap.size) {
-        return (eventData.l = eventData.l || [...idMap.values()]);
-      }
-    }
-    return null;
+    return eventData?.m?.size ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
   }
 
   on<EventName extends keyof T>(

@@ -16,13 +16,7 @@ var Emitter = class {
   }
   _getListeners(eventName) {
     const eventData = this._events.get(eventName);
-    if (eventData) {
-      const idMap = eventData.m;
-      if (idMap.size) {
-        return eventData.l = eventData.l || [...idMap.values()];
-      }
-    }
-    return null;
+    return eventData?.m?.size ? eventData.l || (eventData.l = [...eventData.m.values()]) : null;
   }
   on(eventName, listener, listenerId) {
     const events = this._events;
