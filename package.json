@@ -52,20 +52,20 @@
     "benchmark": "npm ci --prefix benchmarks && npm run test --prefix benchmarks"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "11.1.6",
+    "@size-limit/preset-small-lib": "11.2.0",
     "@types/chai": "5.0.1",
     "@types/mocha": "10.0.10",
-    "chai": "5.1.2",
+    "chai": "5.2.0",
     "dotenv": "16.4.7",
     "karma": "6.4.4",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",
     "karma-mocha-reporter": "2.2.5",
     "mocha": "11.1.0",
-    "prettier": "3.4.2",
+    "prettier": "3.5.2",
     "rimraf": "6.0.1",
-    "size-limit": "11.1.6",
-    "tsup": "8.3.5",
-    "typescript": "5.7.3"
+    "size-limit": "11.2.0",
+    "tsup": "8.4.0",
+    "typescript": "5.8.2"
   }
 }
