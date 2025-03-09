@@ -2,6 +2,7 @@
 import { bench, run, group, summary, barplot, do_not_optimize } from 'mitata';
 import { createEmitters } from '../utils/create-emitters.js';
 import { addFillEvents } from '../utils/add-fill-events.js';
+import { EMITTER_NAMES } from '../utils/emitter-names.js';
 
 export default async function () {
   // Create emitters.
@@ -24,9 +25,9 @@ export default async function () {
 
               let benchCallback;
               switch (emitterName) {
-                case 'eventti local':
-                case 'eventti':
-                case 'mitt': {
+                case EMITTER_NAMES.EventtiLocal:
+                case EMITTER_NAMES.EventtiLatest:
+                case EMITTER_NAMES.Mitt: {
                   benchCallback = () => {
                     for (let i = 0; i < listenerCount; i++) {
                       emitter.on(eventName, () => {
@@ -38,7 +39,7 @@ export default async function () {
                   };
                   break;
                 }
-                case 'nano': {
+                case EMITTER_NAMES.Nano: {
                   benchCallback = () => {
                     for (let i = 0; i < listenerCount; i++) {
                       emitter.on(eventName, () => {
@@ -50,10 +51,10 @@ export default async function () {
                   };
                   break;
                 }
-                case 'tseep':
-                case 'eventemitter2':
-                case 'eventemitter3':
-                case 'node': {
+                case EMITTER_NAMES.Tseep:
+                case EMITTER_NAMES.EventEmitter2:
+                case EMITTER_NAMES.EventEmitter3:
+                case EMITTER_NAMES.Node: {
                   benchCallback = () => {
                     for (let i = 0; i < listenerCount; i++) {
                       emitter.on(eventName, () => {

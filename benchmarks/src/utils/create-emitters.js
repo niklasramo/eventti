@@ -4,13 +4,14 @@ import mitt from 'mitt';
 import { EventEmitter as TseepEmitter } from 'tseep';
 import EventEmitter2 from 'eventemitter2';
 import EventEmitter3 from 'eventemitter3';
-import { Emitter as EventtiEmitter } from 'eventti';
+import { Emitter as EventtiEmitterLatest } from 'eventti';
 import { Emitter as EventtiEmitterLocal } from '../../../dist/index.js';
+import { EMITTER_NAMES } from './emitter-names.js';
 
 // Map of emitter names to emitter creation functions.
 const EMITTER_MAP = new Map([
   [
-    'eventti local',
+    EMITTER_NAMES.EventtiLocal,
     {
       create: () => {
         const eventti = new EventtiEmitterLocal();
@@ -31,10 +32,10 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'eventti 4.0.2',
+    EMITTER_NAMES.EventtiLatest,
     {
       create: () => {
-        const eventti = new EventtiEmitter();
+        const eventti = new EventtiEmitterLatest();
 
         // By default eventti creates a new symbol as the listener id, but that
         // is quite a bit slower than just incrementing a number. Using a symbol
@@ -50,7 +51,7 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'nano',
+    EMITTER_NAMES.Nano,
     {
       create: () => {
         const nano = createNanoEmitter();
@@ -76,7 +77,7 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'mitt',
+    EMITTER_NAMES.Mitt,
     {
       create: () => {
         const emitter = mitt();
@@ -102,7 +103,7 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'tseep',
+    EMITTER_NAMES.Tseep,
     {
       create: () => {
         const emitter = new TseepEmitter();
@@ -116,7 +117,7 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'eventemitter2',
+    EMITTER_NAMES.EventEmitter2,
     {
       create: () => {
         const emitter = new EventEmitter2();
@@ -130,14 +131,14 @@ const EMITTER_MAP = new Map([
     },
   ],
   [
-    'eventemitter3',
+    EMITTER_NAMES.EventEmitter3,
     {
       create: () => new EventEmitter3(),
       destroy: (emitter) => emitter.removeAllListeners(),
     },
   ],
   [
-    'node',
+    EMITTER_NAMES.Node,
     {
       create: () => {
         const emitter = new EventEmitter();

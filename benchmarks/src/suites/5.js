@@ -2,6 +2,7 @@
 import { bench, run, group, summary, barplot, do_not_optimize } from 'mitata';
 import { createEmitters } from '../utils/create-emitters.js';
 import { addFillEvents } from '../utils/add-fill-events.js';
+import { EMITTER_NAMES } from '../utils/emitter-names.js';
 
 export default async function () {
   // Create emitters.
@@ -33,8 +34,8 @@ export default async function () {
                 }
 
                 switch (emitterName) {
-                  case 'eventti local':
-                  case 'eventti': {
+                  case EMITTER_NAMES.EventtiLocal:
+                  case EMITTER_NAMES.EventtiLatest: {
                     const endIds = [];
 
                     for (let i = 0; i < halfListenerCount; i++) {
@@ -50,7 +51,7 @@ export default async function () {
                     };
                     break;
                   }
-                  case 'nano': {
+                  case EMITTER_NAMES.Nano: {
                     const endUnbinders = [];
 
                     for (let i = 0; i < halfListenerCount; i++) {
@@ -66,11 +67,11 @@ export default async function () {
                     };
                     break;
                   }
-                  case 'mitt':
-                  case 'tseep':
-                  case 'eventemitter2':
-                  case 'eventemitter3':
-                  case 'node': {
+                  case EMITTER_NAMES.Mitt:
+                  case EMITTER_NAMES.Tseep:
+                  case EMITTER_NAMES.EventEmitter2:
+                  case EMITTER_NAMES.EventEmitter3:
+                  case EMITTER_NAMES.Node: {
                     const endListeners = [];
 
                     for (let i = 0; i < halfListenerCount; i++) {
