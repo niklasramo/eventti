@@ -93,7 +93,7 @@ const emitter = new Emitter();
 <script type="importmap">
   {
     "imports": {
-      "eventti": "https://cdn.jsdelivr.net/npm/eventti@4.0.0/dist/index.js"
+      "eventti": "https://cdn.jsdelivr.net/npm/eventti@4.0.3/dist/index.js"
     }
   }
 </script>
@@ -712,4 +712,4 @@ type EmitterOptions = {
 
 ## License
 
-Copyright © 2022-2024, Niklas Rämö (inramo@gmail.com). Licensed under the [MIT license](./LICENSE.md).
+Copyright © 2022-2025, Niklas Rämö (inramo@gmail.com). Licensed under the [MIT license](./LICENSE.md).

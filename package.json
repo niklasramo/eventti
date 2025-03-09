@@ -1,6 +1,6 @@
 {
   "name": "eventti",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "A predictable event emitter for pragmatists, written in TypeScript.",
   "keywords": [
     "event",
