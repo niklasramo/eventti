@@ -18,9 +18,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:niklasramo/eventti.git"
+    "url": "git+ssh://git@github.com/niklasramo/eventti.git"
   },
   "type": "module",
+  "sideEffects": false,
   "source": "./src/index.ts",
   "main": "./dist/index.js",
   "exports": {
@@ -42,8 +43,8 @@
     "test-node": "mocha tests/dist/index.js",
     "test-size": "size-limit",
     "build": "npm run ts-check && npm run format && npm run build-lib && npm run build-tests",
-    "build-lib": "rimraf ./dist && tsup --config ./tsup.config.lib.ts",
-    "build-tests": "rimraf ./tests/dist && tsup --config ./tsup.config.tests.ts",
+    "build-lib": "tsdown --config ./tsdown.lib.ts",
+    "build-tests": "tsdown --config ./tsdown.tests.ts",
     "ts-check": "tsc --noEmit",
     "prettier-write": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
     "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
@@ -52,20 +53,19 @@
     "benchmark": "npm ci --prefix benchmarks && npm run test --prefix benchmarks"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "11.2.0",
-    "@types/chai": "5.2.0",
+    "@size-limit/preset-small-lib": "12.0.0",
+    "@types/chai": "5.2.3",
     "@types/mocha": "10.0.10",
-    "chai": "5.2.0",
-    "dotenv": "16.4.7",
+    "chai": "6.2.1",
+    "dotenv": "17.2.3",
     "karma": "6.4.4",
     "karma-browserstack-launcher": "1.6.0",
     "karma-mocha": "2.0.1",
     "karma-mocha-reporter": "2.2.5",
-    "mocha": "11.1.0",
-    "prettier": "3.5.3",
-    "rimraf": "6.0.1",
-    "size-limit": "11.2.0",
-    "tsup": "8.4.0",
-    "typescript": "5.8.2"
+    "mocha": "11.7.5",
+    "prettier": "3.7.4",
+    "size-limit": "12.0.0",
+    "tsdown": "0.17.2",
+    "typescript": "5.9.3"
   }
 }
