@@ -4,7 +4,7 @@ A _predictable_ event emitter for pragmatists, written in TypeScript.
 
 - 🔮 Predictable behaviour.
 - 🎯 Hits the sweet spot between features, size and performance.
-- 🎁 Small footprint (561 bytes minified and gzipped to be exact).
+- 🎁 Small footprint (568 bytes minified and gzipped to be exact).
 - ⚡ Highly optimized and stable performance across browsers.
 - 🤖 Extensively tested.
 - 🍭 No runtime dependencies, what you see is what you get.
@@ -70,7 +70,7 @@ However, emitting speed is on par with the fastest of emitters due to an optimiz
 
 Where things get interesting is when we start removing listeners. While most emitters need to loop an array of listeners to find the matching listener(s), Eventti can just delete the listener from the `Map` by the listener id. This is a huge performance boost when you have a lot of listeners.
 
-In practice, Eventti and most other emitters are so fast that you don't need to worry about performance. But if you're interested in the numbers, we have some [benchmarks](./benchmarks/), which you can run with `npm run benchmark`.
+In practice, Eventti and most other emitters are so fast that you don't need to worry about performance. But if you're interested in the numbers, we have some [benchmarks](./benchmarks/), which you can run with `npm run bench`.
 
 ## Getting started
 
@@ -93,7 +93,7 @@ const emitter = new Emitter();
 <script type="importmap">
   {
     "imports": {
-      "eventti": "https://cdn.jsdelivr.net/npm/eventti@4.0.3/dist/index.js"
+      "eventti": "https://cdn.jsdelivr.net/npm/eventti@4/dist/index.js"
     }
   }
 </script>
@@ -250,16 +250,14 @@ const emitter = new Emitter({
 
 const listener = () => {};
 
-// Now the listener callback is used as
-// the listener id automatically...
+// Now the listener itself is used as the id automatically.
 const idA = emitter.on('a', listener);
 console.log(idA === listener); // -> true
 
-// ...and you can remove the listener
-// with the listener callback...
+// And you can remove it without an explicit id.
 emitter.off('a', listener);
 
-// ...and duplicate listeners can't be added.
+// And duplicate listeners can't be added.
 emitter.on('a', listener);
 emitter.on('a', listener); // throws an error
 ```
@@ -303,6 +301,55 @@ unbind(); // removes the listener
 ```
 
 Do note that this breaks the API contract as now you can't use the return value of `.on()` and `.once()` methods anymore to remove the listeners with `.off` method. But if you're okay with that, this is a nice way to make the API more ergonomic.
+
+### Scheduled callback with deduplication (debounce / coalesce)
+
+When scheduling work to happen later, you can use a stable listener id with `once()` to ensure only **one** callback is registered, regardless of how many times the function is called before the flush.
+
+The `dedupe` mode controls what happens when the same ID is used again:
+
+- `'add'` (default) — **latest** callback wins, repositioned to end of queue.
+- `'update'` — **latest** callback wins, original position preserved.
+- `'ignore'` — **first** callback wins, original position preserved.
+
+For a simple single-event debounce where listener order doesn't matter, the default `'add'` works fine.
+
+```ts
+import { Emitter } from 'eventti';
+
+const emitter = new Emitter();
+const flushId = 'search:flush';
+let pending = false;
+
+export function requestSearch(query: string, run: (query: string) => void) {
+  emitter.once('flush', () => run(query), flushId);
+
+  if (!pending) {
+    pending = true;
+    setTimeout(() => {
+      pending = false;
+      emitter.emit('flush');
+    }, 250);
+  }
+}
+```
+
+### Hot-swap a listener without changing its position (stable slot)
+
+When you want to update a listener's implementation while keeping it at the same position in the listener queue, use `dedupe: 'update'` with a stable id.
+
+```ts
+import { Emitter } from 'eventti';
+
+const emitter = new Emitter({ dedupe: 'update' });
+
+emitter.on('request', () => console.log('log'), 'hook:log');
+emitter.on('request', () => console.log('auth v1'), 'hook:auth');
+emitter.on('request', () => console.log('metrics'), 'hook:metrics');
+
+// Replace auth hook, but keep it between "log" and "metrics".
+emitter.on('request', () => console.log('auth v2'), 'hook:auth');
+```
 
 ### Building a ticker
 
@@ -468,7 +515,7 @@ const b = () => console.log('b');
 const id1 = emitter.on('test', a);
 const id2 = emitter.on('test', b);
 
-// Here we bind a and b listeners agains to "test" event, but we provide the
+// Here we bind a and b listeners again to "test" event, but we provide the
 // listener id manually.
 const id3 = emitter.on('test', a, 'foo');
 const id4 = emitter.on('test', b, 'bar');
@@ -487,8 +534,9 @@ emitter.emit('test');
 // a
 // b
 
-emitter.off('test', a);
+emitter.off('test', id1);
 emitter.emit('test');
+// a
 // b
 ```
 

@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { Emitter, EmitterDedupe } from '../../src/index.js';
+import { Emitter, EmitterDedupe } from 'eventti';
 
 describe('event name', () => {
   it(`should be allowed to be a string, number or symbol`, () => {

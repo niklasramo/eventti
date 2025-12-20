@@ -2,7 +2,7 @@
 // https://github.com/developit/mitt/blob/main/test/test-types-compilation.ts
 // All credit goes there!
 
-import { Emitter } from '../../src/index.js';
+import { Emitter } from 'eventti';
 
 type Events = {
   a: () => void;

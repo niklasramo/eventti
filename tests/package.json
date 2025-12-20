@@ -1,0 +1,33 @@
+{
+  "name": "eventti-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run format && tsdown --config ./tsdown.config.ts",
+    "bump-deps": "npx npm-check-updates -u",
+    "format": "npm run prettier-write",
+    "lint": "npm run prettier-check && npm run ts-check",
+    "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
+    "prettier-write": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
+    "test": "npm run lint && npm run test-node && npm run test-browser",
+    "test-browser": "karma start karma.conf.cjs",
+    "test-node": "mocha dist/index.js",
+    "ts-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chai": "5.2.3",
+    "@types/mocha": "10.0.10",
+    "chai": "6.2.1",
+    "dotenv": "17.2.3",
+    "eventti": "file:..",
+    "karma": "6.4.4",
+    "karma-browserstack-launcher": "1.6.0",
+    "karma-mocha": "2.0.1",
+    "karma-mocha-reporter": "2.2.5",
+    "mocha": "11.7.5",
+    "prettier": "3.7.4",
+    "tsdown": "0.18.1",
+    "typescript": "5.9.3"
+  }
+}
