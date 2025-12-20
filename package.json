@@ -43,6 +43,7 @@
     "build-benchmarks": "npm ci --prefix benchmarks",
     "build-lib": "npm run format && tsdown --config ./tsdown.config.ts",
     "build-tests": "npm ci --prefix tests && npm run build --prefix tests",
+    "bump-deps": "npx npm-check-updates -u && npm run bump-deps --prefix tests && npm run bump-deps --prefix benchmarks",
     "format": "npm run prettier-write && npm run format --prefix tests && npm run format --prefix benchmarks",
     "lint": "npm run prettier-check && npm run ts-check && npm run lint --prefix tests && npm run lint --prefix benchmarks",
     "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",

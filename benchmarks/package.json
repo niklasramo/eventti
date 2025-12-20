@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "bump-deps": "npx npm-check-updates -u",
     "format": "npm run prettier-write",
     "lint": "npm run prettier-check",
     "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",

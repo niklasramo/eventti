@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm run format && tsdown --config ./tsdown.config.ts",
+    "bump-deps": "npx npm-check-updates -u",
+    "format": "npm run prettier-write",
+    "lint": "npm run prettier-check && npm run ts-check",
+    "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
+    "prettier-write": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
     "test": "npm run lint && npm run test-node && npm run test-browser",
     "test-browser": "karma start karma.conf.cjs",
     "test-node": "mocha dist/index.js",
-    "build": "npm run format && tsdown --config ./tsdown.config.ts",
-    "ts-check": "tsc --noEmit",
-    "prettier-write": "prettier --write --no-error-on-unmatched-pattern \"./**/*\"",
-    "prettier-check": "prettier --check --no-error-on-unmatched-pattern \"./**/*\"",
-    "lint": "npm run prettier-check && npm run ts-check",
-    "format": "npm run prettier-write"
+    "ts-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/chai": "5.2.3",
