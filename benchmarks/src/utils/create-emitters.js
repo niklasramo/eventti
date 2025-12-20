@@ -5,7 +5,7 @@ import { EventEmitter as TseepEmitter } from 'tseep';
 import EventEmitter2 from 'eventemitter2';
 import EventEmitter3 from 'eventemitter3';
 import { Emitter as EventtiEmitterLatest } from 'eventti';
-import { Emitter as EventtiEmitterLocal } from '../../../dist/index.js';
+import { Emitter as EventtiEmitterLocal } from 'eventti-local';
 import { EMITTER_NAMES } from './emitter-names.js';
 
 // Map of emitter names to emitter creation functions.
@@ -56,7 +56,7 @@ const EMITTER_MAP = new Map([
       create: () => {
         const nano = createNanoEmitter();
 
-        // Add once method as it is missing in mitt. We do it with the same
+        // Add once method as it is missing in nano. We do it with the same
         // logic as in eventti to keep the benchmarks fair.
         nano.once = (event, callback) => {
           let isCalled = false;

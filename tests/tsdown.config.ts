@@ -2,9 +2,9 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: {
-    index: 'tests/src/index.ts',
+    index: 'src/index.ts',
   },
-  outDir: './tests/dist',
+  outDir: './dist',
   format: ['esm', 'umd'],
   target: false,
   minify: true,
